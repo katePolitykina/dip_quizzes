@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@theme {
+  /* Primary (Concentration) */
+  --color-midnight: #1E293B;
+  --color-indigo: #4F46E5;
+  --color-indigo-light: #6366F1;
+  --color-indigo-dark: #3730A3;
+
+  /* Secondary (Interactive) */
+  --color-amber: #F59E0B;
+  --color-amber-dark: #D97706;
+  --color-teal: #10B981;
+  --color-teal-dark: #059669;
+
+  /* Background & Surface */
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+
+  /* Feedback */
+  --color-error: #EF4444;
+  --color-success: #10B981;
+  --color-violet: #8B5CF6;
+  --color-violet-light: #A78BFA;
+
+  /* Text */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+
+  /* Role Colors */
+  --color-captain-gold: #F59E0B;
+  --color-captain-gold-bg: #FFFBEB;
+  --color-analyst-blue: #6366F1;
+  --color-analyst-blue-bg: #EEF2FF;
+
+  /* Answer Card Colors */
+  --color-answer-red: #EF4444;
+  --color-answer-blue: #3B82F6;
+  --color-answer-yellow: #EAB308;
+  --color-answer-green: #22C55E;
+}
+
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* Standardized button heights */
+.btn-primary {
+  height: 56px;
+  font-weight: 700;
+  border-radius: 16px;
+  transition: all 200ms ease;
+}
+.btn-secondary {
+  height: 48px;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: all 200ms ease;
+}
+
+/* Card base */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Glassmorphism overlay */
+.glass-overlay {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
