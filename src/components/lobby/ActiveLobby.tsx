@@ -1,295 +1,217 @@
-import React, { useState } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import type { DragStartEvent, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import React from 'react';
 import { Play, Shuffle } from 'lucide-react';
-import type { Player, Team, PlayerRole } from '../../types/lobby';
-import { WaitingRoom } from './WaitingRoom';
-import { TeamContainer } from './TeamContainer';
-import { LobbyPlayerCard } from './LobbyPlayerCard';
+import type { GameSessionResponse, PlayerSlotResponse, TeamStateResponse } from '../../types/api';
 
 interface ActiveLobbyProps {
-  pin: string;
-  players: Player[];
-  onPlayersChange: (players: Player[]) => void;
+  session: GameSessionResponse;
+  currentParticipantId: string;
+  isHost: boolean;
+  onAutoDistribute: (teamCount: number) => void;
+  onUpdateRoles: (teamId: string, captainParticipantId: string, analystParticipantId: string) => void;
   onStartQuiz: () => void;
-  onBackToEditor?: () => void;
+  onBackToDashboard?: () => void;
 }
 
-const DEFAULT_TEAMS: Team[] = [
-  { id: 'team-1', name: 'Team 1' },
-  { id: 'team-2', name: 'Team 2' },
-];
+function roleTone(participant: PlayerSlotResponse) {
+  if (participant.teamRole === 'CAPTAIN') {
+    return 'border-[var(--color-captain-gold)] bg-[var(--color-captain-gold-bg)]';
+  }
+  if (participant.teamRole === 'ANALYST') {
+    return 'border-[var(--color-analyst-blue)] bg-[var(--color-analyst-blue-bg)]';
+  }
+  return 'border-border bg-white';
+}
 
 export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
-  pin,
-  players,
-  onPlayersChange,
+  session,
+  currentParticipantId,
+  isHost,
+  onAutoDistribute,
+  onUpdateRoles,
   onStartQuiz,
-  onBackToEditor,
+  onBackToDashboard,
 }) => {
-  const [teams] = useState<Team[]>(DEFAULT_TEAMS);
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const activePlayer = players.find((p) => p.id === activeId);
-    if (!activePlayer) return;
-
-    const isOverWaitingRoom = overId === 'waiting-room';
-    const isOverTeam = teams.some((t) => t.id === overId);
-    const overPlayer = players.find((p) => p.id === overId);
-
-    // Find the target container ID
-    let targetContainerId: string | undefined;
-    if (isOverWaitingRoom) {
-      targetContainerId = undefined;
-    } else if (isOverTeam) {
-      targetContainerId = overId as string;
-    } else if (overPlayer) {
-      targetContainerId = overPlayer.teamId;
-    }
-
-    if (activePlayer.teamId !== targetContainerId) {
-      const newPlayers = players.map((p) => {
-        if (p.id === activeId) {
-          return {
-            ...p,
-            teamId: targetContainerId,
-            role: undefined, // Reset role when moving between teams
-          };
-        }
-        return p;
-      });
-      onPlayersChange(newPlayers);
-    }
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const activePlayerIndex = players.findIndex((p) => p.id === activeId);
-    const overPlayerIndex = players.findIndex((p) => p.id === overId);
-
-    // If dropped on another player in the SAME container, reorder them
-    if (
-      overPlayerIndex !== -1 &&
-      players[activePlayerIndex].teamId === players[overPlayerIndex].teamId
-    ) {
-      onPlayersChange(arrayMove(players, activePlayerIndex, overPlayerIndex));
-    }
-  };
-
-  const handleToggleRole = (playerId: string, targetRole: PlayerRole) => {
-    const player = players.find((p) => p.id === playerId);
-    if (!player || !player.teamId) return;
-
-    onPlayersChange(
-      players.map((p) => {
-        // If they are in the same team
-        if (p.teamId === player.teamId) {
-          // If this is the specific player we clicked
-          if (p.id === playerId) {
-            // Toggle off if already that role, otherwise assign it
-            return { ...p, role: p.role === targetRole ? undefined : targetRole };
-          }
-          // If another player already has this role in this team, strip it from them
-          // because we can only have ONE captain and ONE analyst per team.
-          if (p.role === targetRole) {
-            return { ...p, role: undefined };
-          }
-        }
-        return p;
-      })
-    );
-  };
-
-  const handleRemovePlayer = (playerId: string) => {
-    onPlayersChange(
-      players.map((p) => {
-        if (p.id === playerId) {
-          return { ...p, teamId: undefined, role: undefined };
-        }
-        return p;
-      })
-    );
-  };
-
-  const handleAutoDistribute = () => {
-    const unassigned = players.filter((p) => !p.teamId);
-    if (unassigned.length === 0) return;
-
-    let currentTeamIdx = 0;
-    const newPlayers = players.map((p) => {
-      if (!p.teamId) {
-        const assignedTeam = teams[currentTeamIdx].id;
-        currentTeamIdx = (currentTeamIdx + 1) % teams.length;
-        return { ...p, teamId: assignedTeam, role: undefined };
-      }
-      return p;
-    });
-    
-    // Attempt basic role assignment if none exist
-    teams.forEach(team => {
-        const teamPlayers = newPlayers.filter(p => p.teamId === team.id);
-        const hasCaptain = teamPlayers.some(p => p.role === 'captain');
-        const hasAnalyst = teamPlayers.some(p => p.role === 'analyst');
-        
-        let assignedC = hasCaptain;
-        let assignedA = hasAnalyst;
-
-        teamPlayers.forEach(p => {
-            if (!p.role) {
-                if (!assignedC) {
-                    p.role = 'captain';
-                    assignedC = true;
-                } else if (!assignedA) {
-                    p.role = 'analyst';
-                    assignedA = true;
-                }
-            }
-        });
-    });
-
-    onPlayersChange(newPlayers);
-  };
-
-  const unassignedPlayers = players.filter((p) => !p.teamId);
-  const activeDragPlayer = activeId ? players.find((p) => p.id === activeId) : null;
-
-  // Check if game is ready to start
-  const isReady =
-    players.length > 0 &&
-    unassignedPlayers.length === 0 &&
-    teams.every((team) => {
-      const teamPlayers = players.filter((p) => p.teamId === team.id);
-      return (
-        teamPlayers.length > 0 &&
-        teamPlayers.some((p) => p.role === 'captain') &&
-        teamPlayers.some((p) => p.role === 'analyst')
-      );
-    });
+  const participantCount = session.participants.length;
+  const autoDistributeTeamCount = Math.min(4, Math.floor(participantCount / 2));
+  const canAutoDistribute = autoDistributeTeamCount >= 2;
+  const waitingPlayers = session.participants.filter((participant) => !participant.teamId);
+  const currentPlayer = session.participants.find((participant) => participant.participantId === currentParticipantId);
+  const hasReadyTeams =
+    session.teams.length > 0 &&
+    session.teams.every((team) => team.captainParticipantId && team.analystParticipantId);
 
   return (
-    <div className="h-screen bg-[var(--color-background)] flex flex-col font-sans overflow-hidden">
-      {/* Header */}
-      <header className="bg-[var(--color-surface)] border-b border-[var(--color-border)] shadow-sm z-10 shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">
-              Game PIN
-            </span>
-            <span className="text-4xl font-extrabold text-[var(--color-text-primary)] tracking-widest drop-shadow-sm leading-none">
-              {pin.slice(0, 3)} {pin.slice(3, 6)}
-            </span>
+    <div className="min-h-screen bg-[var(--color-background)]">
+      <header className="bg-[var(--color-surface)] border-b border-[var(--color-border)] sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Room PIN</p>
+            <h1 className="text-4xl font-black tracking-[0.3em] text-[var(--color-text-primary)]">{session.pin}</h1>
+            <p className="mt-1 text-sm font-medium text-[var(--color-text-secondary)]">
+              {currentPlayer ? `Joined as ${currentPlayer.displayName}` : 'Synchronizing participant identity...'}
+            </p>
           </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleAutoDistribute}
-              disabled={unassignedPlayers.length === 0}
-              className="flex items-center gap-2 btn-secondary bg-[var(--color-surface)] border-2 border-[var(--color-indigo-light)]/20 text-[var(--color-indigo)] px-5 rounded-xl font-bold hover:bg-[var(--color-indigo-light)]/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <Shuffle size={20} />
-              Auto-Distribute
-            </button>
-
-            <button
-              onClick={onStartQuiz}
-              disabled={!isReady}
-              className="flex items-center gap-2 btn-primary bg-[var(--color-success)] text-white px-8 rounded-xl text-lg font-bold hover:bg-[var(--color-teal-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95"
-            >
-              <Play size={20} fill="currentColor" />
-              Start Game
-            </button>
-
-            {onBackToEditor && (
+          <div className="flex flex-wrap items-center gap-3">
+            {isHost && (
+              <>
+                <button
+                  onClick={() => onAutoDistribute(autoDistributeTeamCount)}
+                  disabled={!canAutoDistribute}
+                  className="btn-secondary px-5 bg-white border border-border text-text-primary disabled:opacity-50"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Shuffle size={18} />
+                    Auto-Distribute
+                  </span>
+                </button>
+                <button
+                  onClick={onStartQuiz}
+                  disabled={!hasReadyTeams}
+                  className="btn-primary px-6 bg-[var(--color-success)] text-white disabled:opacity-50"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Play size={18} fill="currentColor" />
+                    Start Game
+                  </span>
+                </button>
+              </>
+            )}
+            {onBackToDashboard && (
               <button
-                onClick={onBackToEditor}
-                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] underline absolute top-2 right-4"
+                onClick={onBackToDashboard}
+                className="text-sm font-semibold text-[var(--color-text-muted)] underline hover:text-[var(--color-text-primary)]"
               >
-                Dev: Exit
+                Exit room
               </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content: Split Screen */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <main className="flex-1 max-w-[1600px] mx-auto w-full flex overflow-hidden">
-          {/* Left Column: Waiting Room */}
-          <div className="w-80 shrink-0">
-            <WaitingRoom players={unassignedPlayers} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid lg:grid-cols-[0.72fr_1.28fr] gap-6">
+        <section className="card p-5 h-fit">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-text-primary">Waiting Room</h2>
+            <span className="text-sm font-semibold text-text-muted">{waitingPlayers.length} waiting</span>
           </div>
+          <div className="mt-4 flex flex-col gap-3">
+            {waitingPlayers.length === 0 ? (
+              <p className="text-sm text-text-muted">Everyone has been assigned to a team.</p>
+            ) : (
+              waitingPlayers.map((participant) => (
+                <div key={participant.participantId} className="rounded-2xl border border-border bg-background px-4 py-3">
+                  <p className="font-bold text-text-primary">{participant.displayName}</p>
+                  <p className="text-sm text-text-muted">{participant.guest ? 'Guest player' : participant.provider}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
-          {/* Right Column: Teams Grid */}
-          <div className="flex-1 p-6 overflow-y-auto bg-[var(--color-background)]/50 custom-scrollbar">
-            <div className="max-w-5xl mx-auto flex flex-col gap-6">
-              {teams.map((team) => (
-                <TeamContainer
-                  key={team.id}
-                  team={team}
-                  players={players.filter((p) => p.teamId === team.id)}
-                  onToggleRole={handleToggleRole}
-                  onRemovePlayer={handleRemovePlayer}
-                />
-              ))}
+        <section className="flex flex-col gap-5">
+          {session.teams.length === 0 ? (
+            <div className="card p-8">
+              <h2 className="text-2xl font-black text-text-primary">No teams yet</h2>
+              <p className="mt-3 text-text-secondary">
+                Use auto-distribute to create balanced teams directly from the backend room state.
+              </p>
             </div>
-          </div>
-        </main>
-
-        <DragOverlay>
-          {activeDragPlayer ? (
-            <div className="rotate-3 scale-105 opacity-90 cursor-grabbing shadow-2xl rounded-xl">
-              <LobbyPlayerCard
-                player={activeDragPlayer}
-                inTeam={!!activeDragPlayer.teamId}
+          ) : (
+            session.teams.map((team) => (
+              <LobbyTeamCard
+                key={team.teamId}
+                team={team}
+                participants={session.participants.filter((participant) => participant.teamId === team.teamId)}
+                isHost={isHost}
+                onUpdateRoles={onUpdateRoles}
               />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+            ))
+          )}
+        </section>
+      </main>
+    </div>
+  );
+};
+
+interface LobbyTeamCardProps {
+  team: TeamStateResponse;
+  participants: PlayerSlotResponse[];
+  isHost: boolean;
+  onUpdateRoles: (teamId: string, captainParticipantId: string, analystParticipantId: string) => void;
+}
+
+const LobbyTeamCard: React.FC<LobbyTeamCardProps> = ({
+  team,
+  participants,
+  isHost,
+  onUpdateRoles,
+}) => {
+  const captainParticipantId = team.captainParticipantId ?? participants[0]?.participantId;
+  const analystParticipantId = team.analystParticipantId ?? participants[1]?.participantId ?? participants[0]?.participantId;
+
+  return (
+    <div className="card p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-xl font-black text-text-primary">{team.name}</h3>
+          <p className="text-sm text-text-muted">{participants.length} players assigned</p>
+        </div>
+        {isHost && participants.length >= 2 && (
+          <button
+            onClick={() => onUpdateRoles(team.teamId, captainParticipantId, analystParticipantId)}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-bold text-text-primary hover:bg-background"
+          >
+            Sync roles
+          </button>
+        )}
+      </div>
+
+      {isHost && participants.length >= 2 && (
+        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+          <label className="text-sm font-semibold text-text-secondary">
+            Captain
+            <select
+              defaultValue={captainParticipantId}
+              onChange={(event) => onUpdateRoles(team.teamId, event.target.value, analystParticipantId)}
+              className="mt-2 w-full rounded-xl border border-border px-3 py-2 bg-white"
+            >
+              {participants.map((participant) => (
+                <option key={participant.participantId} value={participant.participantId}>
+                  {participant.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-text-secondary">
+            Analyst
+            <select
+              defaultValue={analystParticipantId}
+              onChange={(event) => onUpdateRoles(team.teamId, captainParticipantId, event.target.value)}
+              className="mt-2 w-full rounded-xl border border-border px-3 py-2 bg-white"
+            >
+              {participants.map((participant) => (
+                <option key={participant.participantId} value={participant.participantId}>
+                  {participant.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      <div className="mt-5 grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {participants.map((participant) => (
+          <div
+            key={participant.participantId}
+            className={`rounded-2xl border px-4 py-3 ${roleTone(participant)}`}
+          >
+            <p className="font-bold text-text-primary">{participant.displayName}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
+              {participant.teamRole ?? 'MEMBER'}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

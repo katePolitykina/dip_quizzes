@@ -2,8 +2,9 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 import type { Quiz, Question, Answer } from '../types/quiz';
 
 type QuizAction =
+  | { type: 'LOAD_QUIZ'; payload: Quiz }
   | { type: 'UPDATE_TITLE'; payload: string }
-  | { type: 'UPDATE_GLOBAL_SETTINGS'; payload: { timer?: number; cbmEnabled?: boolean } }
+  | { type: 'UPDATE_GLOBAL_SETTINGS'; payload: { globalTimer?: number; cbmEnabled?: boolean } }
   | { type: 'SET_ACTIVE_QUESTION'; payload: string | null }
   | { type: 'ADD_QUESTION'; payload: Question }
   | { type: 'UPDATE_QUESTION'; payload: { id: string; updates: Partial<Question> } }
@@ -37,6 +38,8 @@ const initialState: Quiz = {
 
 function quizReducer(state: Quiz, action: QuizAction): Quiz {
   switch (action.type) {
+    case 'LOAD_QUIZ':
+      return action.payload;
     case 'UPDATE_TITLE':
       return { ...state, title: action.payload };
     case 'UPDATE_GLOBAL_SETTINGS':
@@ -93,8 +96,11 @@ const QuizContext = createContext<{
   dispatch: React.Dispatch<QuizAction>;
 } | null>(null);
 
-export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(quizReducer, initialState);
+export const QuizProvider: React.FC<{ children: ReactNode; initialQuiz?: Quiz }> = ({
+  children,
+  initialQuiz,
+}) => {
+  const [state, dispatch] = useReducer(quizReducer, initialQuiz ?? initialState);
 
   return (
     <QuizContext.Provider value={{ state, dispatch }}>
@@ -112,3 +118,5 @@ export const useQuiz = () => {
 };
 
 export { createEmptyQuestion };
+export type { QuizAction };
+export { initialState as emptyQuizState };

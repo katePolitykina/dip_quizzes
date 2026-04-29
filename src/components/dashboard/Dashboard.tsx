@@ -4,77 +4,95 @@ import { GlobalActions } from './GlobalActions';
 import { QuizLibrary } from './QuizLibrary';
 import { EditProfileModal } from './EditProfileModal';
 import type { QuizSnippet } from './QuizCard';
+import type { UserMeResponse } from '../../types/api';
+import { AuthPanel } from '../auth/AuthPanel';
 
 interface DashboardProps {
   onCreateQuiz: () => void;
   onJoinLobby: () => void;
   onHostGame: (quizId: string) => void;
   onEditQuiz: (quizId: string) => void;
+  user: UserMeResponse | null;
+  quizzes: QuizSnippet[];
+  isGuest: boolean;
+  isLoading: boolean;
+  authError: string | null;
+  onLogin: (email: string, password: string) => void;
+  onRegister: (payload: { email: string; password: string; displayName: string }) => void;
+  onSaveProfile: (displayName: string, avatarSeed: string) => void;
+  onLogout: () => void;
 }
-
-const MOCK_QUIZZES: QuizSnippet[] = [
-  {
-    id: 'q-1',
-    title: 'Biology 10 - Cell Structure',
-    questionCount: 15,
-  },
-  {
-    id: 'q-2',
-    title: 'Company Team Building Trivia',
-    questionCount: 8,
-  },
-  {
-    id: 'q-3',
-    title: 'JavaScript Frameworks 2026',
-    questionCount: 20,
-  },
-  {
-    id: 'q-4',
-    title: 'JavaScript Frameworks 2026',
-    questionCount: 20,
-  },
-  {
-    id: 'q-5',
-    title: 'JavaScript Frameworks 2026',
-    questionCount: 20,
-  },
-  {
-    id: 'q-6',
-    title: 'JavaScript Frameworks 2026',
-    questionCount: 20,
-  },
-];
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onCreateQuiz,
   onJoinLobby,
   onHostGame,
   onEditQuiz,
+  user,
+  quizzes,
+  isGuest,
+  isLoading,
+  authError,
+  onLogin,
+  onRegister,
+  onSaveProfile,
+  onLogout,
 }) => {
-  const [displayName, setDisplayName] = useState('Alex Carter');
-  const [avatarSeed, setAvatarSeed] = useState('alex-carter-123');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleSaveProfile = (newName: string, newSeed: string) => {
-    setDisplayName(newName);
-    setAvatarSeed(newSeed);
+    onSaveProfile(newName, newSeed);
   };
+
+  if (!user || isGuest) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start">
+          <div className="card p-8 bg-gradient-to-br from-white via-white to-[var(--color-indigo-light)]/10">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--color-indigo)]">Host Console</p>
+            <h1 className="mt-4 text-5xl font-black tracking-tight text-text-primary">Run the live quiz from one room state.</h1>
+            <p className="mt-4 text-lg text-text-secondary leading-8">
+              Sign in to manage quizzes, create rooms, moderate players, and control the real-time game loop.
+            </p>
+            <div className="mt-8 grid sm:grid-cols-3 gap-3">
+              <div className="card p-4">
+                <p className="text-sm font-semibold text-text-muted">REST</p>
+                <p className="mt-2 font-bold text-text-primary">JWT-backed quiz CRUD</p>
+              </div>
+              <div className="card p-4">
+                <p className="text-sm font-semibold text-text-muted">STOMP</p>
+                <p className="mt-2 font-bold text-text-primary">Live room state sync</p>
+              </div>
+              <div className="card p-4">
+                <p className="text-sm font-semibold text-text-muted">Roles</p>
+                <p className="mt-2 font-bold text-text-primary">Captain, Analyst, Member</p>
+              </div>
+            </div>
+          </div>
+          <AuthPanel
+            isLoading={isLoading}
+            error={authError}
+            onLogin={onLogin}
+            onRegister={onRegister}
+            onJoinLobby={onJoinLobby}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 flex flex-col gap-10">
-
-        {/* Profile Section */}
         <section>
           <UserProfileHeader
-            displayName={displayName}
-            email="alex.carter@example.com"
-            avatarSeed={avatarSeed}
+            displayName={user.displayName}
+            email={user.email ?? user.provider}
+            avatarSeed={user.avatarUrl || user.displayName}
             onEditProfile={() => setIsEditModalOpen(true)}
           />
         </section>
 
-        {/* Global Actions */}
         <section>
           <GlobalActions
             onCreateQuiz={onCreateQuiz}
@@ -82,22 +100,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
         </section>
 
-        {/* Quiz Library */}
         <section>
           <QuizLibrary
-            quizzes={MOCK_QUIZZES}
+            quizzes={quizzes}
             onHostGame={onHostGame}
             onEditQuiz={onEditQuiz}
           />
         </section>
 
+        <section className="flex justify-end">
+          <button
+            onClick={onLogout}
+            className="text-sm font-semibold text-text-muted hover:text-text-primary underline"
+          >
+            Sign out
+          </button>
+        </section>
       </div>
 
-      {/* Edit Profile Modal */}
       {isEditModalOpen && (
         <EditProfileModal
-          displayName={displayName}
-          avatarSeed={avatarSeed}
+          displayName={user.displayName}
+          avatarSeed={user.avatarUrl || user.displayName}
           onSave={handleSaveProfile}
           onClose={() => setIsEditModalOpen(false)}
         />

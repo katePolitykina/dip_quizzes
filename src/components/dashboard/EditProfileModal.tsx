@@ -34,7 +34,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [name, setName] = useState(displayName);
   const [selectedSeed, setSelectedSeed] = useState(avatarSeed);
 
-  const isNameValid = name.trim().length >= 2;
+  const isNameValid = name.trim().length >= 3;
 
   const handleSave = () => {
     if (!isNameValid) return;
@@ -119,7 +119,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               }`}
             />
             {!isNameValid && name.length > 0 && (
-              <p className="text-xs text-error font-medium">Name must be at least 2 characters.</p>
+              <p className="text-xs text-error font-medium">Name must be at least 3 characters.</p>
             )}
             <p className="text-xs text-text-muted text-right">{name.length}/30</p>
           </div>

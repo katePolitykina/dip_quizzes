@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
+import type { Quiz } from '../../types/quiz';
+import type { QuizAction } from '../../context/QuizContext';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onSave?: (quiz: Quiz, dispatch: React.Dispatch<QuizAction>) => void;
+  isSaving?: boolean;
+  saveError?: string | null;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveError }) => {
   const { state, dispatch } = useQuiz();
   const [titleInput, setTitleInput] = useState(state.title);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   const isTitleValid = titleInput.length >= 3 && titleInput.length <= 100;
 
@@ -22,12 +29,8 @@ export const Header: React.FC = () => {
   };
 
   const handleSave = () => {
-    if (!isTitleValid) return;
-    setIsSaving(true);
-    setTimeout(() => {
-      dispatch({ type: 'SET_LAST_SAVED', payload: new Date().toISOString() });
-      setIsSaving(false);
-    }, 1000);
+    if (!isTitleValid || !onSave) return;
+    onSave(state, dispatch);
   };
 
   return (
@@ -55,6 +58,11 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2 text-sm text-text-muted">
           {isSaving ? (
             <span className="animate-pulse font-medium">Saving...</span>
+          ) : saveError ? (
+            <>
+              <AlertCircle size={16} className="text-error" />
+              <span className="font-medium text-error">{saveError}</span>
+            </>
           ) : state.lastSaved ? (
             <>
               <CheckCircle2 size={16} className="text-success" />
@@ -99,7 +107,7 @@ export const Header: React.FC = () => {
                   onChange={(e) =>
                     dispatch({
                       type: 'UPDATE_GLOBAL_SETTINGS',
-                      payload: { timer: parseInt(e.target.value) },
+                      payload: { globalTimer: parseInt(e.target.value, 10) },
                     })
                   }
                   className="w-full accent-indigo"

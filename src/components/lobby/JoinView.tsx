@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
+import { GoogleSignInButton } from '../auth/GoogleSignInButton';
 
 interface JoinViewProps {
   onJoin: (pin: string, nickname: string) => void;
-  onHostLogin?: () => void; // Optional, user said "do not implement this now" but we can leave the prop out or hide the button
+  isJoining?: boolean;
+  error?: string | null;
 }
 
-export const JoinView: React.FC<JoinViewProps> = ({ onJoin }) => {
+export const JoinView: React.FC<JoinViewProps> = ({ onJoin, isJoining = false, error }) => {
   const [pin, setPin] = useState('');
   const [nickname, setNickname] = useState('');
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers, max 6 digits
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    const value = e.target.value.slice(0, 6);
     setPin(value);
   };
 
@@ -57,12 +59,19 @@ export const JoinView: React.FC<JoinViewProps> = ({ onJoin }) => {
 
           <button
             type="submit"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isJoining}
             className="w-full btn-primary bg-[var(--color-midnight)] text-white hover:bg-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl active:scale-95"
           >
-            Enter
+            {isJoining ? 'Joining...' : 'Enter'}
           </button>
+          {error && (
+            <p className="text-center text-sm font-semibold text-[var(--color-error)]">{error}</p>
+          )}
         </form>
+
+        <div className="mt-6 border-t border-white/30 pt-6">
+          <GoogleSignInButton label="Sign in with Google as host" />
+        </div>
 
       </div>
     </div>
