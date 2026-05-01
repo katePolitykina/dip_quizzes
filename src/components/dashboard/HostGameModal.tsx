@@ -4,6 +4,7 @@ import { Minus, Plus, X } from 'lucide-react';
 export interface HostGameSettings {
   playInTeams: boolean;
   teamCount: number | null;
+  cbmEnabled: boolean;
 }
 
 interface HostGameModalProps {
@@ -15,13 +16,17 @@ interface HostGameModalProps {
 export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart, onClose }) => {
   const [playInTeams, setPlayInTeams] = useState(true);
   const [teamCount, setTeamCount] = useState(2);
+  const [cbmEnabled, setCbmEnabled] = useState(false);
 
   const summary = useMemo(() => {
-    if (!playInTeams) {
-      return 'Each participant will play on their own scoreline.';
+    const modeSummary = !playInTeams
+      ? 'Each participant will play on their own scoreline.'
+      : `${teamCount} teams will be used in the lobby.`;
+    if (!cbmEnabled) {
+      return modeSummary;
     }
-    return `${teamCount} teams will be used in the lobby.`;
-  }, [playInTeams, teamCount]);
+    return `${modeSummary} Confidence-based marking is enabled.`;
+  }, [cbmEnabled, playInTeams, teamCount]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
@@ -101,6 +106,30 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
             </div>
           )}
 
+          <div className="rounded-[14px] border border-border bg-background p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-text-primary">Confidence-based marking</p>
+                <p className="mt-1 text-sm text-text-secondary">Captains must choose confidence before confirming an answer.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={cbmEnabled}
+                onClick={() => setCbmEnabled((current) => !current)}
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
+                  cbmEnabled ? 'bg-indigo' : 'bg-border'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${
+                    cbmEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
           <div className="rounded-[14px] bg-background px-4 py-3 text-sm font-semibold text-text-secondary">
             {summary}
           </div>
@@ -114,7 +143,7 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
             Cancel
           </button>
           <button
-            onClick={() => onStart({ playInTeams, teamCount: playInTeams ? teamCount : null })}
+            onClick={() => onStart({ playInTeams, teamCount: playInTeams ? teamCount : null, cbmEnabled })}
             className="btn-secondary flex-1 rounded-[12px] bg-teal text-white transition-all duration-200 hover:bg-teal-dark"
           >
             Create Room

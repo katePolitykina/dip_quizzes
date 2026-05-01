@@ -261,7 +261,7 @@ function App() {
     try {
       const roomSession = await apiClient.createRoom({
         globalTimer: 30,
-        cbmEnabled: false,
+        cbmEnabled: settings.cbmEnabled,
         playInTeams: settings.playInTeams,
         teamCount: settings.teamCount,
       });
