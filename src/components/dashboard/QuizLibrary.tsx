@@ -5,7 +5,7 @@ import { EmptyState } from './EmptyState';
 
 interface QuizLibraryProps {
   quizzes: QuizSnippet[];
-  onHostGame: (quizId: string) => void;
+  onHostGame: (quizId: string, quizTitle: string) => void;
   onEditQuiz: (quizId: string) => void;
 }
 

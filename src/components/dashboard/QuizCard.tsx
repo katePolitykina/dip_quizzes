@@ -9,7 +9,7 @@ export interface QuizSnippet {
 
 interface QuizCardProps {
   quiz: QuizSnippet;
-  onHostGame: (quizId: string) => void;
+  onHostGame: (quizId: string, quizTitle: string) => void;
   onEditQuiz: (quizId: string) => void;
 }
 
@@ -37,7 +37,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onHostGame, onEditQuiz
         </button>
 
         <button
-          onClick={() => onHostGame(quiz.id)}
+          onClick={() => onHostGame(quiz.id, quiz.title)}
           className="btn-secondary flex items-center justify-center gap-2 px-5 bg-teal text-white rounded-[12px] hover:bg-teal-dark active:scale-95 transition-all duration-200 flex-1 sm:flex-none"
         >
           <Play size={18} fill="currentColor" />

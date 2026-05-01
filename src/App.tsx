@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { OAuthCallback } from './components/auth/OAuthCallback';
 import { Dashboard } from './components/dashboard/Dashboard';
+import type { HostGameSettings } from './components/dashboard/HostGameModal';
 import { JoinView } from './components/lobby/JoinView';
 import { ActiveLobby } from './components/lobby/ActiveLobby';
 import { QuizEditorLayout } from './components/layout/QuizEditorLayout';
@@ -191,6 +192,9 @@ function App() {
     if (!room.session || !auth.session) {
       return;
     }
+    if (room.session.hostUserId === auth.session.identity.id) {
+      return;
+    }
     const identityId = auth.session.identity.id;
     const stillPresent = room.session.participants.some(
       (participant) => participant.participantId === identityId
@@ -253,11 +257,13 @@ function App() {
     navigateToScreen('editor');
   };
 
-  const handleHostGame = async (quizId: string) => {
+  const handleHostGame = async (quizId: string, settings: HostGameSettings) => {
     try {
       const roomSession = await apiClient.createRoom({
         globalTimer: 30,
         cbmEnabled: false,
+        playInTeams: settings.playInTeams,
+        teamCount: settings.teamCount,
       });
       dispatch(setRoomSession(roomSession));
       setHostingQuizId(quizId);
@@ -387,10 +393,16 @@ function App() {
       return (
         <ActiveLobby
           session={room.session}
-          currentParticipantId={currentParticipant.participantId}
+          currentParticipantId={currentParticipant?.participantId}
+          hostDisplayName={auth.session?.identity.displayName ?? 'Host'}
           isHost={isHost}
-          onAutoDistribute={(teamCount) => {
-            void apiClient.autoDistribute(room.session!.pin, { teamCount })
+          onAutoDistribute={() => {
+            void apiClient.autoDistribute(room.session!.pin, { teamCount: room.session!.configuredTeamCount ?? 2 })
+              .then((session) => dispatch(setRoomSession(session)))
+              .catch((error: ApiError) => dispatch(setRoomError(error.message)));
+          }}
+          onUpdateTeams={(assignments) => {
+            void apiClient.updateTeams(room.session!.pin, { assignments })
               .then((session) => dispatch(setRoomSession(session)))
               .catch((error: ApiError) => dispatch(setRoomError(error.message)));
           }}
@@ -430,6 +442,89 @@ function App() {
         hiddenAnswerIds={room.hiddenAnswerIds}
         histogram={room.histogram}
         isHost={isHost}
+        onSelectAnswer={(teamId, answerId) => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/selection`, { answerId });
+        }}
+        onConfirmAnswer={(teamId, answerId, confidenceLevel) => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/confirm`, {
+            answerId,
+            confidenceLevel,
+          });
+        }}
+        onUseFiftyFifty={(teamId) => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/sort-answers`);
+        }}
+        onAdvance={() => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/game/advance`);
+        }}
+        onTogglePause={() => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/moderation`, { command: 'TOGGLE_PAUSE' });
+        }}
+        onKick={(participantId) => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/moderation`, {
+            command: 'KICK_PLAYER',
+            targetParticipantId: participantId,
+          });
+        }}
+        onLeaveRoom={handleLeaveRoom}
+      />
+    );
+  }
+
+  if (currentScreen === 'room' && room.session && isHost) {
+    if (room.session.status === 'LOBBY') {
+      return (
+        <ActiveLobby
+          session={room.session}
+          currentParticipantId={null}
+          hostDisplayName={auth.session?.identity.displayName ?? 'Host'}
+          isHost
+          onAutoDistribute={() => {
+            void apiClient.autoDistribute(room.session!.pin, { teamCount: room.session!.configuredTeamCount ?? 2 })
+              .then((session) => dispatch(setRoomSession(session)))
+              .catch((error: ApiError) => dispatch(setRoomError(error.message)));
+          }}
+          onUpdateTeams={(assignments) => {
+            void apiClient.updateTeams(room.session!.pin, { assignments })
+              .then((session) => dispatch(setRoomSession(session)))
+              .catch((error: ApiError) => dispatch(setRoomError(error.message)));
+          }}
+          onUpdateRoles={(teamId, captainParticipantId, analystParticipantId) => {
+            const assignments = room.session!.teams.map((team) => ({
+              teamId: team.teamId,
+              captainParticipantId: team.teamId === teamId ? captainParticipantId : team.captainParticipantId || team.participantIds[0],
+              analystParticipantId: team.teamId === teamId ? analystParticipantId : team.analystParticipantId || team.participantIds[1] || team.participantIds[0],
+            }));
+            void apiClient.updateRoles(room.session!.pin, { assignments })
+              .then((session) => dispatch(setRoomSession(session)))
+              .catch((error: ApiError) => dispatch(setRoomError(error.message)));
+          }}
+          onStartQuiz={() => {
+            if (!hostingQuizId) {
+              dispatch(setRoomError('No quiz was selected for this room.'));
+              return;
+            }
+            const pin = room.session?.pin;
+            if (!pin) {
+              return;
+            }
+            sendRoomMessage(`/app/rooms/${pin}/game/start`, {
+              quizId: hostingQuizId,
+            });
+          }}
+          onBackToDashboard={handleLeaveRoom}
+        />
+      );
+    }
+
+    return (
+      <GameSessionScreen
+        session={room.session}
+        participant={null}
+        connectionStatus={room.connectionStatus}
+        hiddenAnswerIds={room.hiddenAnswerIds}
+        histogram={room.histogram}
+        isHost
         onSelectAnswer={(teamId, answerId) => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/selection`, { answerId });
         }}

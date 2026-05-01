@@ -36,8 +36,13 @@ const roomSlice = createSlice({
   initialState,
   reducers: {
     setRoomSession(state, action: PayloadAction<GameSessionResponse | null>) {
+      const previousQuestionIndex = state.session?.currentQuestionIndex ?? null;
       state.session = action.payload;
       state.pin = action.payload?.pin ?? null;
+      const nextQuestionIndex = action.payload?.currentQuestionIndex ?? null;
+      if (action.payload?.status === 'START_QUESTION' || nextQuestionIndex !== previousQuestionIndex) {
+        state.histogram = null;
+      }
       if (action.payload?.status !== 'START_QUESTION') {
         state.hiddenAnswerIds = [];
       }

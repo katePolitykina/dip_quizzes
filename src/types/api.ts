@@ -102,6 +102,8 @@ export interface QuizDetailResponse {
 export interface CreateRoomRequest {
   globalTimer: number;
   cbmEnabled: boolean;
+  playInTeams: boolean;
+  teamCount?: number | null;
 }
 
 export interface AutoDistributeTeamsRequest {
@@ -114,8 +116,17 @@ export interface TeamRoleAssignmentRequest {
   analystParticipantId: string;
 }
 
+export interface TeamAssignmentRequest {
+  teamId: string;
+  participantIds: string[];
+}
+
 export interface UpdateTeamRolesRequest {
   assignments: TeamRoleAssignmentRequest[];
+}
+
+export interface UpdateTeamsRequest {
+  assignments: TeamAssignmentRequest[];
 }
 
 export interface CbmSettingsResponse {
@@ -203,6 +214,8 @@ export interface GameSessionResponse {
   quizTitle?: string | null;
   globalTimer: number;
   cbmEnabled: boolean;
+  playInTeams: boolean;
+  configuredTeamCount?: number | null;
   status: GameStatus;
   createdAt: string;
   updatedAt: string;

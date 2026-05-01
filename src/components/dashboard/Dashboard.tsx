@@ -3,6 +3,7 @@ import { UserProfileHeader } from './UserProfileHeader';
 import { GlobalActions } from './GlobalActions';
 import { QuizLibrary } from './QuizLibrary';
 import { EditProfileModal } from './EditProfileModal';
+import { HostGameModal, type HostGameSettings } from './HostGameModal';
 import type { QuizSnippet } from './QuizCard';
 import type { UserMeResponse } from '../../types/api';
 import { AuthPanel } from '../auth/AuthPanel';
@@ -10,7 +11,7 @@ import { AuthPanel } from '../auth/AuthPanel';
 interface DashboardProps {
   onCreateQuiz: () => void;
   onJoinLobby: () => void;
-  onHostGame: (quizId: string) => void;
+  onHostGame: (quizId: string, settings: HostGameSettings) => void;
   onEditQuiz: (quizId: string) => void;
   user: UserMeResponse | null;
   quizzes: QuizSnippet[];
@@ -39,6 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLogout,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [hostingSelection, setHostingSelection] = useState<{ quizId: string; quizTitle: string } | null>(null);
 
   const handleSaveProfile = (newName: string, newSeed: string) => {
     onSaveProfile(newName, newSeed);
@@ -103,7 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <section>
           <QuizLibrary
             quizzes={quizzes}
-            onHostGame={onHostGame}
+            onHostGame={(quizId, quizTitle) => setHostingSelection({ quizId, quizTitle })}
             onEditQuiz={onEditQuiz}
           />
         </section>
@@ -124,6 +126,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           avatarSeed={user.avatarUrl || user.displayName}
           onSave={handleSaveProfile}
           onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
+      {hostingSelection && (
+        <HostGameModal
+          quizTitle={hostingSelection.quizTitle}
+          onStart={(settings) => {
+            onHostGame(hostingSelection.quizId, settings);
+            setHostingSelection(null);
+          }}
+          onClose={() => setHostingSelection(null)}
         />
       )}
     </div>

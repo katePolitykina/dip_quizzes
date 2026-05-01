@@ -11,6 +11,7 @@ import type {
   QuizSummaryResponse,
   QuizUpsertRequest,
   RegisterRequest,
+  UpdateTeamsRequest,
   UpdateTeamRolesRequest,
   UpdateUserRequest,
   UserMeResponse,
@@ -151,6 +152,12 @@ export const apiClient = {
   },
   updateRoles(pin: string, body: UpdateTeamRolesRequest) {
     return request<GameSessionResponse>(`/api/rooms/${pin}/teams/roles`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  },
+  updateTeams(pin: string, body: UpdateTeamsRequest) {
+    return request<GameSessionResponse>(`/api/rooms/${pin}/teams`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     });

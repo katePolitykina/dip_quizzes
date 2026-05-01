@@ -9,7 +9,7 @@ import type {
 
 interface GameSessionScreenProps {
   session: GameSessionResponse;
-  participant: PlayerSlotResponse;
+  participant: PlayerSlotResponse | null;
   connectionStatus: string;
   hiddenAnswerIds: string[];
   histogram: { answersCount: number; totalTeams: number } | null;
@@ -41,11 +41,10 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
   const [now, setNow] = useState(Date.now());
   const [cbmChoice, setCbmChoice] = useState<ConfidenceLevel>('MEDIUM');
   const [confirmCandidate, setConfirmCandidate] = useState<string | null>(null);
-  const team = session.teams.find((entry) => entry.teamId === participant.teamId) ?? null;
+  const team = participant ? session.teams.find((entry) => entry.teamId === participant.teamId) ?? null : null;
   const currentQuestion = session.currentQuestion;
   const deadlineMs = session.questionDeadlineAt ? new Date(session.questionDeadlineAt).getTime() : null;
   const remainingMs = deadlineMs ? Math.max(0, deadlineMs - now) : null;
-  const roleLabel = participant.teamRole ?? 'MEMBER';
   const visibleAnswers = useMemo(
     () => currentQuestion?.answers.filter((answer) => !hiddenAnswerIds.includes(answer.id)) ?? [],
     [currentQuestion, hiddenAnswerIds]
@@ -95,24 +94,35 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
     );
   }
 
-  if (!team || !currentQuestion) {
+  if (!currentQuestion) {
     return (
       <div className="min-h-screen bg-background">
         <TopBar session={session} connectionStatus={connectionStatus} onLeaveRoom={onLeaveRoom} />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
           <div className="card p-8">
             <h1 className="text-3xl font-black text-text-primary">Waiting for the next room update</h1>
-            <p className="mt-3 text-text-secondary">Your participant record or question snapshot has not arrived yet.</p>
+            <p className="mt-3 text-text-secondary">The room question snapshot has not arrived yet.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  const selectedAnswerId = team.selectedAnswerId;
-  const confirmedAnswerId = team.confirmedAnswerId;
-  const isCaptain = participant.teamRole === 'CAPTAIN';
-  const isAnalyst = participant.teamRole === 'ANALYST';
+  const selectedAnswerId = team?.selectedAnswerId;
+  const confirmedAnswerId = team?.confirmedAnswerId;
+  const isCaptain = Boolean(participant && team && team.captainParticipantId === participant.participantId);
+  const isAnalyst = Boolean(participant && team && team.analystParticipantId === participant.participantId);
+  const roleLabel = isHost && !participant
+    ? 'HOST'
+    : isCaptain && isAnalyst
+      ? 'CAPTAIN / ANALYST'
+      : isCaptain
+        ? 'CAPTAIN'
+        : isAnalyst
+          ? 'ANALYST'
+          : participant?.teamRole ?? 'MEMBER';
+  const canUseFiftyFifty = isAnalyst || (!session.playInTeams && isCaptain);
+  const canAnswer = Boolean(team && participant);
 
   const handleConfirm = () => {
     if (!selectedAnswerId) {
@@ -122,11 +132,17 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
       setConfirmCandidate(selectedAnswerId);
       return;
     }
+    if (!team) {
+      return;
+    }
     onConfirmAnswer(team.teamId, selectedAnswerId);
   };
 
   const submitCbmConfirmation = () => {
     if (!confirmCandidate) {
+      return;
+    }
+    if (!team) {
       return;
     }
     onConfirmAnswer(team.teamId, confirmCandidate, cbmChoice);
@@ -158,8 +174,12 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
               return (
                 <button
                   key={answer.id}
-                  onClick={() => onSelectAnswer(team.teamId, answer.id)}
-                  disabled={session.status !== 'START_QUESTION' || !!confirmedAnswerId}
+                  onClick={() => {
+                    if (team) {
+                      onSelectAnswer(team.teamId, answer.id);
+                    }
+                  }}
+                  disabled={!canAnswer || session.status !== 'START_QUESTION' || !!confirmedAnswerId}
                   className={`rounded-3xl border px-5 py-5 text-left transition-all ${
                     isConfirmed
                       ? 'border-success bg-success/10'
@@ -170,7 +190,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                 >
                   <p className="text-lg font-bold text-text-primary">{answer.text}</p>
                   <p className="mt-2 text-sm font-semibold text-text-muted">
-                    {isConfirmed ? 'Confirmed' : isSelected ? 'Selected by your team' : 'Tap to select'}
+                    {isConfirmed ? 'Confirmed' : isSelected ? 'Selected by your team' : canAnswer ? 'Tap to select' : 'Host view'}
                   </p>
                 </button>
               );
@@ -181,7 +201,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             <span className="rounded-full bg-background px-4 py-2 text-sm font-bold text-text-secondary">
               Role: {roleLabel}
             </span>
-            {isAnalyst && (
+            {canUseFiftyFifty && team && (
               <button
                 onClick={() => onUseFiftyFifty(team.teamId)}
                 disabled={team.analystPowerUsed || session.status !== 'START_QUESTION'}
@@ -193,7 +213,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                 </span>
               </button>
             )}
-            {isCaptain && (
+            {isCaptain && team && (
               <button
                 onClick={handleConfirm}
                 disabled={!selectedAnswerId || !!confirmedAnswerId || session.status !== 'START_QUESTION'}
@@ -202,9 +222,14 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                 Confirm
               </button>
             )}
-            {!isCaptain && !isAnalyst && (
+            {!isHost && !isCaptain && !isAnalyst && (
               <p className="text-sm font-semibold text-text-muted">
                 Members can propose answers and follow the live team selection.
+              </p>
+            )}
+            {isHost && !participant && (
+              <p className="text-sm font-semibold text-text-muted">
+                You are moderating this game as host and are not assigned to a player slot.
               </p>
             )}
           </div>
@@ -290,7 +315,7 @@ const TopBar: React.FC<{
 
 const HostPanel: React.FC<{
   session: GameSessionResponse;
-  team: TeamStateResponse;
+  team: TeamStateResponse | null;
   isHost: boolean;
   histogram: { answersCount: number; totalTeams: number } | null;
   onAdvance: () => void;
@@ -320,10 +345,12 @@ const HostPanel: React.FC<{
     </div>
 
     <div className="mt-5 rounded-3xl bg-background p-5">
-      <p className="text-sm font-semibold text-text-muted">Your team</p>
-      <h3 className="mt-1 text-2xl font-black text-text-primary">{team.name}</h3>
+      <p className="text-sm font-semibold text-text-muted">{team ? 'Your team' : 'Host view'}</p>
+      <h3 className="mt-1 text-2xl font-black text-text-primary">{team ? team.name : 'Moderation only'}</h3>
       <p className="mt-2 text-text-secondary">
-        Selected: {team.selectedAnswerId ?? 'none'} | Confirmed: {team.confirmedAnswerId ?? 'none'}
+        {team
+          ? `Selected: ${team.selectedAnswerId ?? 'none'} | Confirmed: ${team.confirmedAnswerId ?? 'none'}`
+          : 'You are not assigned to a player slot in this room.'}
       </p>
     </div>
 
