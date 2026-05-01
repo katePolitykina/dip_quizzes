@@ -111,7 +111,8 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
     );
   }
 
-  const selectedAnswerId = team?.selectedAnswerId;
+  const selectedAnswerId = participant?.selectedAnswerId;
+  const teamSelectedAnswerId = team?.selectedAnswerId;
   const confirmedAnswerId = team?.confirmedAnswerId;
   const isCaptain = Boolean(participant && team && team.captainParticipantId === participant.participantId);
   const isAnalyst = Boolean(participant && team && team.analystParticipantId === participant.participantId);
@@ -133,17 +134,17 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
       : null;
 
   const handleConfirm = () => {
-    if (!selectedAnswerId) {
+    if (!teamSelectedAnswerId) {
       return;
     }
     if (session.cbmEnabled) {
-      setConfirmCandidate(selectedAnswerId);
+      setConfirmCandidate(teamSelectedAnswerId);
       return;
     }
     if (!team) {
       return;
     }
-    onConfirmAnswer(team.teamId, selectedAnswerId);
+    onConfirmAnswer(team.teamId, teamSelectedAnswerId);
   };
 
   const submitCbmConfirmation = () => {
@@ -178,7 +179,9 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
           <div className="grid md:grid-cols-2 gap-4">
             {visibleAnswers.map((answer) => {
               const isSelected = selectedAnswerId === answer.id;
+              const isTeamSelected = teamSelectedAnswerId === answer.id;
               const isConfirmed = confirmedAnswerId === answer.id;
+              const teamVoteCount = team?.answerVoteCounts?.[answer.id] ?? 0;
               const confirmedCorrect = isConfirmed
                 ? immediateConfirmedCorrect ?? team?.confirmedAnswerCorrect ?? answer.correct ?? null
                 : null;
@@ -198,12 +201,21 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                       ? 'border-success bg-success/10'
                       : isConfirmedWrong
                         ? 'border-error bg-error/10'
+                      : isTeamSelected
+                        ? 'border-[var(--color-captain-gold)] bg-[var(--color-captain-gold-bg)]'
                       : isSelected
                         ? 'border-indigo bg-indigo/10'
                         : 'border-border bg-white hover:border-indigo/40'
                   }`}
                 >
-                  <p className="text-lg font-bold text-text-primary">{answer.text}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-lg font-bold text-text-primary">{answer.text}</p>
+                    {teamVoteCount > 0 && (
+                      <span className="shrink-0 rounded-full bg-background px-3 py-1 text-xs font-bold text-text-secondary">
+                        {teamVoteCount} vote{teamVoteCount === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </div>
                   <p className={`mt-2 text-sm font-semibold ${
                     isConfirmedCorrect
                       ? 'text-success'
@@ -215,10 +227,12 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                       ? 'Confirmed - correct'
                       : isConfirmedWrong
                         ? 'Confirmed - incorrect'
+                        : isTeamSelected
+                          ? 'Captain choice'
                         : isConfirmed
                           ? 'Confirmed'
                           : isSelected
-                            ? 'Selected by your team'
+                            ? 'Selected by you'
                             : canAnswer
                               ? 'Tap to select'
                               : 'Host view'}
@@ -247,7 +261,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             {isCaptain && team && (
               <button
                 onClick={handleConfirm}
-                disabled={!selectedAnswerId || !!confirmedAnswerId || session.status !== 'START_QUESTION'}
+                disabled={!teamSelectedAnswerId || !!confirmedAnswerId || session.status !== 'START_QUESTION'}
                 className="btn-secondary px-5 bg-[var(--color-captain-gold)] text-white disabled:opacity-50"
               >
                 Confirm

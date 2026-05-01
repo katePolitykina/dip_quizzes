@@ -193,6 +193,7 @@ export interface PlayerSlotResponse {
   guest: boolean;
   teamId?: string | null;
   teamRole?: TeamRole | null;
+  selectedAnswerId?: string | null;
 }
 
 export interface TeamStateResponse {
@@ -205,6 +206,7 @@ export interface TeamStateResponse {
   selectedAnswerId?: string | null;
   confirmedAnswerId?: string | null;
   confirmedAnswerCorrect?: boolean | null;
+  answerVoteCounts?: Record<string, number> | null;
   totalScore: number;
   analystPowerUsed: boolean;
 }
