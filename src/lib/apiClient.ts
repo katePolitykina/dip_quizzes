@@ -1,4 +1,5 @@
 import { isSessionExpired, readAuthSession } from './authStorage';
+import { appConfig } from '../config/appConfig';
 import type {
   AuthResponse,
   AutoDistributeTeamsRequest,
@@ -14,8 +15,6 @@ import type {
   UpdateUserRequest,
   UserMeResponse,
 } from '../types/api';
-
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -49,7 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}, authRequired = t
     headers.set('Authorization', `Bearer ${session.accessToken}`);
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(`${appConfig.apiBaseUrl}${path}`, {
     ...init,
     headers,
   });

@@ -1,7 +1,6 @@
 import type { AuthIdentity, AuthRole, AuthResponse } from '../types/api';
+import { appConfig } from '../config/appConfig';
 import type { StoredAuthSession } from './authStorage';
-
-const DEFAULT_OAUTH_BASE_URL = 'http://localhost:8080';
 
 interface JwtPayload {
   sub?: string;
@@ -17,15 +16,6 @@ interface JwtPayload {
   id?: string;
   displayName?: string;
   avatarUrl?: string;
-}
-
-function resolveOAuthBaseUrl() {
-  const configured =
-    (import.meta.env.VITE_OAUTH_BASE_URL as string | undefined) ??
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-    DEFAULT_OAUTH_BASE_URL;
-
-  return configured.replace(/\/$/, '');
 }
 
 function base64UrlDecode(value: string) {
@@ -149,7 +139,7 @@ function parseStructuredSession(params: URLSearchParams): StoredAuthSession | nu
 }
 
 export function getGoogleOAuthStartUrl() {
-  return `${resolveOAuthBaseUrl()}/oauth2/authorization/google`;
+  return `${appConfig.oauthBaseUrl}/oauth2/authorization/google`;
 }
 
 export function getOAuthErrorMessage(params: URLSearchParams) {

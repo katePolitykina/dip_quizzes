@@ -1,16 +1,14 @@
 import { isSessionExpired, readAuthSession } from '../lib/authStorage';
+import { appConfig } from '../config/appConfig';
 import type { SocketEnvelope } from '../types/api';
 
-const WS_BASE_URL = (import.meta.env.VITE_WS_BASE_URL as string | undefined)?.replace(/\/$/, '');
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? window.location.origin;
-
 function getWebSocketUrl() {
-  if (WS_BASE_URL) {
-    return `${WS_BASE_URL}/ws`;
+  if (appConfig.wsBaseUrl) {
+    return `${appConfig.wsBaseUrl}/ws`;
   }
 
-  const base = API_BASE_URL.startsWith('http')
-    ? API_BASE_URL.replace(/^http/, 'ws')
+  const base = appConfig.apiBaseUrl
+    ? appConfig.apiBaseUrl.replace(/^http/, 'ws')
     : window.location.origin.replace(/^http/, 'ws');
 
   return `${base}/ws`;
