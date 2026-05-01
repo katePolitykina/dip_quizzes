@@ -141,6 +141,7 @@ export interface CbmSettingsResponse {
 export interface CurrentQuestionAnswerResponse {
   id: string;
   text: string;
+  correct?: boolean | null;
 }
 
 export interface CurrentQuestionResponse {
@@ -203,6 +204,7 @@ export interface TeamStateResponse {
   confirmedConfidenceLevel?: ConfidenceLevel | null;
   selectedAnswerId?: string | null;
   confirmedAnswerId?: string | null;
+  confirmedAnswerCorrect?: boolean | null;
   totalScore: number;
   analystPowerUsed: boolean;
 }
@@ -259,6 +261,7 @@ export interface TeamAnswerEventPayload {
   selectedAnswerId?: string | null;
   confirmedAnswerId?: string | null;
   finalized: boolean;
+  confirmedCorrect?: boolean | null;
 }
 
 export interface AnswerHistogramPayload {

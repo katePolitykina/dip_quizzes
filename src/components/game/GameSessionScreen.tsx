@@ -4,6 +4,7 @@ import type {
   ConfidenceLevel,
   GameSessionResponse,
   PlayerSlotResponse,
+  TeamAnswerEventPayload,
   TeamStateResponse,
 } from '../../types/api';
 
@@ -13,6 +14,7 @@ interface GameSessionScreenProps {
   connectionStatus: string;
   hiddenAnswerIds: string[];
   histogram: { answersCount: number; totalTeams: number } | null;
+  teamSelectionEvent: TeamAnswerEventPayload | null;
   isHost: boolean;
   onSelectAnswer: (teamId: string, answerId: string) => void;
   onConfirmAnswer: (teamId: string, answerId: string, confidenceLevel?: ConfidenceLevel) => void;
@@ -29,6 +31,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
   connectionStatus,
   hiddenAnswerIds,
   histogram,
+  teamSelectionEvent,
   isHost,
   onSelectAnswer,
   onConfirmAnswer,
@@ -123,6 +126,11 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
           : participant?.teamRole ?? 'MEMBER';
   const canUseFiftyFifty = isAnalyst || (!session.playInTeams && isCaptain);
   const canAnswer = Boolean(team && participant);
+  const immediateConfirmedCorrect = teamSelectionEvent?.finalized
+    && teamSelectionEvent.teamId === team?.teamId
+    && teamSelectionEvent.confirmedAnswerId === confirmedAnswerId
+      ? teamSelectionEvent.confirmedCorrect
+      : null;
 
   const handleConfirm = () => {
     if (!selectedAnswerId) {
@@ -171,6 +179,11 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             {visibleAnswers.map((answer) => {
               const isSelected = selectedAnswerId === answer.id;
               const isConfirmed = confirmedAnswerId === answer.id;
+              const confirmedCorrect = isConfirmed
+                ? immediateConfirmedCorrect ?? team?.confirmedAnswerCorrect ?? answer.correct ?? null
+                : null;
+              const isConfirmedCorrect = confirmedCorrect === true;
+              const isConfirmedWrong = confirmedCorrect === false;
               return (
                 <button
                   key={answer.id}
@@ -181,16 +194,34 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                   }}
                   disabled={!canAnswer || session.status !== 'START_QUESTION' || !!confirmedAnswerId}
                   className={`rounded-3xl border px-5 py-5 text-left transition-all ${
-                    isConfirmed
+                    isConfirmedCorrect
                       ? 'border-success bg-success/10'
+                      : isConfirmedWrong
+                        ? 'border-error bg-error/10'
                       : isSelected
                         ? 'border-indigo bg-indigo/10'
                         : 'border-border bg-white hover:border-indigo/40'
                   }`}
                 >
                   <p className="text-lg font-bold text-text-primary">{answer.text}</p>
-                  <p className="mt-2 text-sm font-semibold text-text-muted">
-                    {isConfirmed ? 'Confirmed' : isSelected ? 'Selected by your team' : canAnswer ? 'Tap to select' : 'Host view'}
+                  <p className={`mt-2 text-sm font-semibold ${
+                    isConfirmedCorrect
+                      ? 'text-success'
+                      : isConfirmedWrong
+                        ? 'text-error'
+                        : 'text-text-muted'
+                  }`}>
+                    {isConfirmedCorrect
+                      ? 'Confirmed - correct'
+                      : isConfirmedWrong
+                        ? 'Confirmed - incorrect'
+                        : isConfirmed
+                          ? 'Confirmed'
+                          : isSelected
+                            ? 'Selected by your team'
+                            : canAnswer
+                              ? 'Tap to select'
+                              : 'Host view'}
                   </p>
                 </button>
               );

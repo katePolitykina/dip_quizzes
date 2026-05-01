@@ -37,11 +37,15 @@ const roomSlice = createSlice({
   reducers: {
     setRoomSession(state, action: PayloadAction<GameSessionResponse | null>) {
       const previousQuestionIndex = state.session?.currentQuestionIndex ?? null;
+      const previousStatus = state.session?.status ?? null;
       state.session = action.payload;
       state.pin = action.payload?.pin ?? null;
       const nextQuestionIndex = action.payload?.currentQuestionIndex ?? null;
-      if (action.payload?.status === 'START_QUESTION' || nextQuestionIndex !== previousQuestionIndex) {
+      const startedNewQuestion = action.payload?.status === 'START_QUESTION'
+        && (previousStatus !== 'START_QUESTION' || nextQuestionIndex !== previousQuestionIndex);
+      if (startedNewQuestion || nextQuestionIndex !== previousQuestionIndex) {
         state.histogram = null;
+        state.teamSelectionEvent = null;
       }
       if (action.payload?.status !== 'START_QUESTION') {
         state.hiddenAnswerIds = [];

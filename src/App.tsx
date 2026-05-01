@@ -441,6 +441,7 @@ function App() {
         connectionStatus={room.connectionStatus}
         hiddenAnswerIds={room.hiddenAnswerIds}
         histogram={room.histogram}
+        teamSelectionEvent={room.teamSelectionEvent}
         isHost={isHost}
         onSelectAnswer={(teamId, answerId) => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/selection`, { answerId });
@@ -524,6 +525,7 @@ function App() {
         connectionStatus={room.connectionStatus}
         hiddenAnswerIds={room.hiddenAnswerIds}
         histogram={room.histogram}
+        teamSelectionEvent={room.teamSelectionEvent}
         isHost
         onSelectAnswer={(teamId, answerId) => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/selection`, { answerId });
