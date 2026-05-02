@@ -248,7 +248,7 @@ export interface StartGameRequest {
 }
 
 export interface ModerationCommandRequest {
-  command: 'TOGGLE_PAUSE' | 'KICK_PLAYER';
+  command: 'TOGGLE_PAUSE' | 'KICK_PLAYER' | 'END_GAME';
   targetParticipantId?: string;
 }
 

@@ -245,6 +245,26 @@ function App() {
     }
   }, [room.session, auth.session, currentScreen, dispatch]);
 
+  useEffect(() => {
+    if (!room.session || !auth.session || currentScreen !== 'room') {
+      return;
+    }
+    if (room.session.hostUserId === auth.session.identity.id) {
+      return;
+    }
+    const roomEndedByHost = room.session.status === 'FINISHED' && !room.session.finalReport;
+    if (!roomEndedByHost) {
+      return;
+    }
+
+    socketRef.current?.disconnect();
+    dispatch(clearRoom());
+    dispatch(setHistogram(null));
+    setHostingQuizId(null);
+    setJoiningError('The host ended the room.');
+    navigateToScreen('join', true);
+  }, [room.session, auth.session, currentScreen, dispatch]);
+
   const handleSocketEnvelope = (envelope: SocketEnvelope) => {
     switch (envelope.type) {
       case 'ROOM_STATE':
@@ -330,11 +350,27 @@ function App() {
   };
 
   const handleLeaveRoom = () => {
-    socketRef.current?.disconnect();
-    dispatch(clearRoom());
-    dispatch(setHistogram(null));
-    setHostingQuizId(null);
-    navigateToScreen(auth.session?.role === 'ROLE_USER' ? 'dashboard' : 'join');
+    const finalizeLeaveRoom = () => {
+      socketRef.current?.disconnect();
+      dispatch(clearRoom());
+      dispatch(setHistogram(null));
+      setHostingQuizId(null);
+      navigateToScreen(auth.session?.role === 'ROLE_USER' ? 'dashboard' : 'join');
+    };
+
+    if (isHost && room.session && room.session.status !== 'FINISHED') {
+      try {
+        socketRef.current?.send(`/app/rooms/${room.session.pin}/moderation`, { command: 'END_GAME' });
+      } catch (error) {
+        dispatch(setRoomError((error as Error).message));
+        finalizeLeaveRoom();
+        return;
+      }
+      window.setTimeout(finalizeLeaveRoom, 75);
+      return;
+    }
+
+    finalizeLeaveRoom();
   };
 
   const sendRoomMessage = (destination: string, body?: unknown) => {
