@@ -177,10 +177,21 @@ export interface FinalTeamReportResponse {
   questionScores: TeamQuestionScoreResponse[];
 }
 
+export interface FinalPlayerReportResponse {
+  participantId: string;
+  displayName: string;
+  teamName?: string | null;
+  correctAnswers: number;
+  totalResponseTimeMillis: number;
+  averageResponseTimeMillis: number;
+  rank: number;
+}
+
 export interface FinalGameReportResponse {
   quizId: string;
   quizTitle: string;
   generatedAt: string;
+  players: FinalPlayerReportResponse[];
   teams: FinalTeamReportResponse[];
 }
 
@@ -194,6 +205,15 @@ export interface PlayerSlotResponse {
   teamId?: string | null;
   teamRole?: TeamRole | null;
   selectedAnswerId?: string | null;
+  questionAnswers: PlayerQuestionAnswerResponse[];
+}
+
+export interface PlayerQuestionAnswerResponse {
+  questionId: string;
+  questionIndex: number;
+  selectedAnswerId: string;
+  answeredAtEpochMillis: number;
+  responseTimeMillis: number;
 }
 
 export interface TeamStateResponse {

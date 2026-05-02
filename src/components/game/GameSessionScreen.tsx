@@ -67,6 +67,29 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
           <div className="card p-8">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo">Final Report</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-text-primary">{session.finalReport.quizTitle}</h1>
+            <div className="mt-8">
+              <h2 className="text-2xl font-black text-text-primary">Player Scoreboard</h2>
+              <div className="mt-4 space-y-3">
+                {session.finalReport.players.map((player) => (
+                  <div key={player.participantId} className="rounded-2xl border border-border bg-white px-5 py-4 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold uppercase tracking-[0.2em] text-text-muted">#{player.rank}</p>
+                      <h3 className="mt-1 text-xl font-black text-text-primary">{player.displayName}</h3>
+                      <p className="text-sm text-text-secondary">{player.teamName ?? 'No team assigned'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-success">{player.correctAnswers} correct</p>
+                      <p className="text-sm font-semibold text-text-secondary">
+                        Avg {Math.round(player.averageResponseTimeMillis)} ms
+                      </p>
+                      <p className="text-sm font-semibold text-text-secondary">
+                        Total {Math.round(player.totalResponseTimeMillis)} ms
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               {session.finalReport.teams
                 .slice()
