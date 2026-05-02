@@ -22,6 +22,7 @@ interface GameSessionScreenProps {
   onTogglePause: () => void;
   onKick: (participantId: string) => void;
   onLeaveRoom: () => void;
+  onOpenDetailedResult?: () => void;
 }
 
 export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
@@ -38,6 +39,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
   onTogglePause,
   onKick,
   onLeaveRoom,
+  onOpenDetailedResult,
 }) => {
   const [now, setNow] = useState(Date.now());
   const [cbmChoice, setCbmChoice] = useState<ConfidenceLevel>('MEDIUM');
@@ -67,6 +69,13 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
           <div className="card p-8">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo">Final Report</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-text-primary">{session.finalReport.quizTitle}</h1>
+            {isHost && onOpenDetailedResult && (
+              <div className="mt-6">
+                <button onClick={onOpenDetailedResult} className="rounded-2xl bg-indigo px-5 py-3 font-bold text-white">
+                  Detailed result
+                </button>
+              </div>
+            )}
             <div className="mt-8">
               <h2 className="text-2xl font-black text-text-primary">Player Scoreboard</h2>
               <div className="mt-4 space-y-3">

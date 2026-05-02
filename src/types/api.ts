@@ -187,11 +187,26 @@ export interface FinalPlayerReportResponse {
   rank: number;
 }
 
+export interface FinalQuestionPlayerAnswerResponse {
+  participantId: string;
+  displayName: string;
+  selectedAnswerId?: string | null;
+  selectedAnswerText?: string | null;
+  responseTimeMillis?: number | null;
+}
+
+export interface FinalQuestionDetailResponse {
+  questionId: string;
+  questionText: string;
+  playerAnswers: FinalQuestionPlayerAnswerResponse[];
+}
+
 export interface FinalGameReportResponse {
   quizId: string;
   quizTitle: string;
   generatedAt: string;
   players: FinalPlayerReportResponse[];
+  questions: FinalQuestionDetailResponse[];
   teams: FinalTeamReportResponse[];
 }
 

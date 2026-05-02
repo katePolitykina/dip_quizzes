@@ -6,6 +6,7 @@ import { JoinView } from './components/lobby/JoinView';
 import { ActiveLobby } from './components/lobby/ActiveLobby';
 import { QuizEditorLayout } from './components/layout/QuizEditorLayout';
 import { GameSessionScreen } from './components/game/GameSessionScreen';
+import { DetailedResultScreen } from './components/game/DetailedResultScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import {
   clearAuthError,
@@ -39,17 +40,20 @@ import type {
   TeamAnswerEventPayload,
 } from './types/api';
 
-type ScreenState = 'dashboard' | 'editor' | 'join' | 'room';
-type AppPath = '/' | '/dashboard' | '/editor' | '/join' | `/room/${string}` | '/oauth2/callback';
+type ScreenState = 'dashboard' | 'editor' | 'join' | 'room' | 'detailedResult';
+type AppPath = '/' | '/dashboard' | '/editor' | '/join' | `/room/${string}` | `/room/${string}/detailedResult` | '/oauth2/callback';
 
 const OAUTH_CALLBACK_PATH: AppPath = '/oauth2/callback';
 
 function getRoomPinFromPath(pathname: string): string | null {
-  const match = pathname.match(/^\/room\/([^/]+)$/);
+  const match = pathname.match(/^\/room\/([^/]+)(?:\/detailedResult)?$/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
 function getScreenFromPath(pathname: string): ScreenState {
+  if (/^\/room\/[^/]+\/detailedResult$/.test(pathname)) {
+    return 'detailedResult';
+  }
   if (getRoomPinFromPath(pathname)) {
     return 'room';
   }
@@ -124,6 +128,11 @@ function App() {
     navigateToPath(`/room/${encodeURIComponent(pin)}` as AppPath, replace);
   };
 
+  const navigateToDetailedResult = (pin: string, replace = false) => {
+    setCurrentScreen('detailedResult');
+    navigateToPath(`/room/${encodeURIComponent(pin)}/detailedResult` as AppPath, replace);
+  };
+
   useEffect(() => {
     const handlePopState = () => {
       const nextPath = window.location.pathname;
@@ -184,7 +193,7 @@ function App() {
   }, [auth.session, room.pin, dispatch]);
 
   useEffect(() => {
-    if (!auth.session || currentScreen !== 'room' || !routeRoomPin) {
+    if (!auth.session || (currentScreen !== 'room' && currentScreen !== 'detailedResult') || !routeRoomPin) {
       return;
     }
     if (room.session?.pin === routeRoomPin) {
@@ -264,6 +273,15 @@ function App() {
     setJoiningError('The host ended the room.');
     navigateToScreen('join', true);
   }, [room.session, auth.session, currentScreen, dispatch]);
+
+  useEffect(() => {
+    if (currentScreen !== 'detailedResult' || !room.session) {
+      return;
+    }
+    if (!isHost) {
+      navigateToRoom(room.session.pin, true);
+    }
+  }, [currentScreen, room.session, isHost]);
 
   const handleSocketEnvelope = (envelope: SocketEnvelope) => {
     switch (envelope.type) {
@@ -541,6 +559,7 @@ function App() {
           });
         }}
         onLeaveRoom={handleLeaveRoom}
+        onOpenDetailedResult={isHost ? () => navigateToDetailedResult(room.session!.pin) : undefined}
       />
     );
   }
@@ -621,6 +640,19 @@ function App() {
             targetParticipantId: participantId,
           });
         }}
+        onLeaveRoom={handleLeaveRoom}
+        onOpenDetailedResult={() => navigateToDetailedResult(room.session!.pin)}
+      />
+    );
+  }
+
+  if (currentScreen === 'detailedResult' && room.session?.finalReport && isHost) {
+    return (
+      <DetailedResultScreen
+        quizTitle={room.session.finalReport.quizTitle}
+        roomPin={room.session.pin}
+        finalReport={room.session.finalReport}
+        onBackToRoom={() => navigateToRoom(room.session!.pin)}
         onLeaveRoom={handleLeaveRoom}
       />
     );
