@@ -29,6 +29,7 @@ interface GameSessionScreenProps {
   onSelectAnswer: (teamId: string, answerId: string) => void;
   onConfirmAnswer: (teamId: string, answerId: string, confidenceLevel?: ConfidenceLevel) => void;
   onUseFiftyFifty: (teamId: string) => void;
+  onAdvance: () => void;
   onTogglePause: () => void;
   onKick: (participantId: string) => void;
   onLeaveRoom: () => void;
@@ -46,6 +47,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
   onSelectAnswer,
   onConfirmAnswer,
   onUseFiftyFifty,
+  onAdvance,
   onTogglePause,
   onKick,
   onLeaveRoom,
@@ -335,6 +337,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             team={team}
             isHost={isHost}
             histogram={histogram}
+            onAdvance={onAdvance}
             onTogglePause={onTogglePause}
             onKick={onKick}
           />
@@ -411,9 +414,10 @@ const HostPanel: React.FC<{
   team: TeamStateResponse | null;
   isHost: boolean;
   histogram: { answersCount: number; totalTeams: number } | null;
+  onAdvance: () => void;
   onTogglePause: () => void;
   onKick: (participantId: string) => void;
-}> = ({ session, team, isHost, histogram, onTogglePause, onKick }) => (
+}> = ({ session, team, isHost, histogram, onAdvance, onTogglePause, onKick }) => (
   <div className="card p-5">
     <div className="flex items-center gap-2 text-text-primary">
       <BarChart3 size={20} />
@@ -443,6 +447,11 @@ const HostPanel: React.FC<{
 
     {isHost && (
       <div className="mt-5 space-y-3">
+        {session.status === 'START_QUESTION' && (histogram?.answersCount ?? session.answersCount) === (histogram?.totalTeams ?? session.teams.length) && (
+          <button onClick={onAdvance} className="w-full rounded-2xl bg-teal px-4 py-3 font-bold text-white">
+            Advance to next question
+          </button>
+        )}
         <button onClick={onTogglePause} className="w-full rounded-2xl bg-amber px-4 py-3 font-bold text-midnight">
           <span className="inline-flex items-center gap-2">
             {session.status === 'PAUSED' ? <Play size={18} /> : <Pause size={18} />}

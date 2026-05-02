@@ -549,6 +549,9 @@ function App() {
         onUseFiftyFifty={(teamId) => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/sort-answers`);
         }}
+        onAdvance={() => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/game/advance`);
+        }}
         onTogglePause={() => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/moderation`, { command: 'TOGGLE_PAUSE' });
         }}
@@ -630,6 +633,9 @@ function App() {
         }}
         onUseFiftyFifty={(teamId) => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/teams/${teamId}/sort-answers`);
+        }}
+        onAdvance={() => {
+          sendRoomMessage(`/app/rooms/${room.session!.pin}/game/advance`);
         }}
         onTogglePause={() => {
           sendRoomMessage(`/app/rooms/${room.session!.pin}/moderation`, { command: 'TOGGLE_PAUSE' });
