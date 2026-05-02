@@ -147,6 +147,11 @@ export const apiClient = {
       method: 'POST',
     });
   },
+  leaveRoom(pin: string) {
+    return request<GameSessionResponse>(`/api/rooms/${pin}/leave`, {
+      method: 'DELETE',
+    });
+  },
   autoDistribute(pin: string, body: AutoDistributeTeamsRequest) {
     return request<GameSessionResponse>(`/api/rooms/${pin}/teams/auto-distribute`, {
       method: 'POST',

@@ -180,6 +180,13 @@ function App() {
         dispatch(clearRoom());
         navigateToScreen('dashboard', true);
       },
+      onKicked: () => {
+        dispatch(clearRoom());
+        dispatch(setHistogram(null));
+        dispatch(markKicked());
+        setJoiningError('You were kicked from the room.');
+        navigateToScreen('join', true);
+      },
       onEnvelope: (envelope) => handleSocketEnvelope(envelope),
     });
     socketRef.current = client;
@@ -248,8 +255,12 @@ function App() {
     const stillPresent = room.session.participants.some(
       (participant) => participant.participantId === identityId
     );
-    if (!stillPresent && currentScreen === 'room') {
+    if (!stillPresent && (currentScreen === 'room' || currentScreen === 'detailedResult')) {
+      socketRef.current?.disconnect();
+      dispatch(clearRoom());
+      dispatch(setHistogram(null));
       dispatch(markKicked());
+      setJoiningError('You were kicked from the room.');
       navigateToScreen('join', true);
     }
   }, [room.session, auth.session, currentScreen, dispatch]);
@@ -367,7 +378,7 @@ function App() {
     }
   };
 
-  const handleLeaveRoom = () => {
+  const handleLeaveRoom = async () => {
     const finalizeLeaveRoom = () => {
       socketRef.current?.disconnect();
       dispatch(clearRoom());
@@ -386,6 +397,14 @@ function App() {
       }
       window.setTimeout(finalizeLeaveRoom, 75);
       return;
+    }
+
+    if (room.session) {
+      try {
+        await apiClient.leaveRoom(room.session.pin);
+      } catch (error) {
+        dispatch(setRoomError((error as Error).message));
+      }
     }
 
     finalizeLeaveRoom();

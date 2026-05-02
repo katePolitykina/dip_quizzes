@@ -51,6 +51,7 @@ interface RoomSocketOptions {
   onConnectionChange: (status: 'connecting' | 'connected' | 'reconnecting' | 'disconnected') => void;
   onError: (message: string) => void;
   onUnauthorized: () => void;
+  onKicked: () => void;
 }
 
 export class RoomSocketClient {
@@ -115,12 +116,16 @@ export class RoomSocketClient {
       });
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
       this.options.onConnectionChange('disconnected');
       if (this.reconnectTimer != null) {
         window.clearTimeout(this.reconnectTimer);
       }
       if (this.intentionalClose) {
+        return;
+      }
+      if (event.code === 1008) {
+        this.options.onKicked();
         return;
       }
       const currentSession = readAuthSession();
