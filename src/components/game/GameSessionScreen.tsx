@@ -19,7 +19,6 @@ interface GameSessionScreenProps {
   onSelectAnswer: (teamId: string, answerId: string) => void;
   onConfirmAnswer: (teamId: string, answerId: string, confidenceLevel?: ConfidenceLevel) => void;
   onUseFiftyFifty: (teamId: string) => void;
-  onAdvance: () => void;
   onTogglePause: () => void;
   onKick: (participantId: string) => void;
   onLeaveRoom: () => void;
@@ -36,7 +35,6 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
   onSelectAnswer,
   onConfirmAnswer,
   onUseFiftyFifty,
-  onAdvance,
   onTogglePause,
   onKick,
   onLeaveRoom,
@@ -286,7 +284,6 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             team={team}
             isHost={isHost}
             histogram={histogram}
-            onAdvance={onAdvance}
             onTogglePause={onTogglePause}
             onKick={onKick}
           />
@@ -363,10 +360,9 @@ const HostPanel: React.FC<{
   team: TeamStateResponse | null;
   isHost: boolean;
   histogram: { answersCount: number; totalTeams: number } | null;
-  onAdvance: () => void;
   onTogglePause: () => void;
   onKick: (participantId: string) => void;
-}> = ({ session, team, isHost, histogram, onAdvance, onTogglePause, onKick }) => (
+}> = ({ session, team, isHost, histogram, onTogglePause, onKick }) => (
   <div className="card p-5">
     <div className="flex items-center gap-2 text-text-primary">
       <BarChart3 size={20} />
@@ -407,11 +403,6 @@ const HostPanel: React.FC<{
             {session.status === 'PAUSED' ? 'Resume game' : 'Pause game'}
           </span>
         </button>
-        {session.status === 'SHOW_RESULTS' && (
-          <button onClick={onAdvance} className="w-full rounded-2xl bg-teal px-4 py-3 font-bold text-white">
-            Advance to next question
-          </button>
-        )}
         <div className="rounded-3xl border border-border p-4">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-text-muted">Moderation</p>
           <div className="mt-3 space-y-2">
