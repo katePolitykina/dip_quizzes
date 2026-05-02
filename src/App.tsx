@@ -40,31 +40,35 @@ import type {
 } from './types/api';
 
 type ScreenState = 'dashboard' | 'editor' | 'join' | 'room';
-type AppPath = '/' | '/dashboard' | '/editor' | '/join' | '/room' | '/oauth2/callback';
+type AppPath = '/' | '/dashboard' | '/editor' | '/join' | `/room/${string}` | '/oauth2/callback';
 
 const OAUTH_CALLBACK_PATH: AppPath = '/oauth2/callback';
 
+function getRoomPinFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/room\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 function getScreenFromPath(pathname: string): ScreenState {
+  if (getRoomPinFromPath(pathname)) {
+    return 'room';
+  }
   switch (pathname) {
     case '/editor':
       return 'editor';
     case '/join':
       return 'join';
-    case '/room':
-      return 'room';
     default:
       return 'dashboard';
   }
 }
 
-function getPathFromScreen(screen: ScreenState): Exclude<AppPath, '/' | '/oauth2/callback'> {
+function getPathFromScreen(screen: ScreenState): Exclude<AppPath, '/' | '/oauth2/callback' | `/room/${string}`> {
   switch (screen) {
     case 'editor':
       return '/editor';
     case 'join':
       return '/join';
-    case 'room':
-      return '/room';
     case 'dashboard':
     default:
       return '/dashboard';
@@ -83,6 +87,7 @@ function App() {
   const [isJoining, setIsJoining] = useState(false);
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
   const [hostingQuizId, setHostingQuizId] = useState<string | null>(null);
+  const routeRoomPin = useMemo(() => getRoomPinFromPath(pathname), [pathname]);
   const socketRef = useRef<RoomSocketClient | null>(null);
   const subscribedTeamRef = useRef<string | null>(null);
 
@@ -112,6 +117,11 @@ function App() {
     const path = getPathFromScreen(screen);
     setCurrentScreen(screen);
     navigateToPath(path, replace);
+  };
+
+  const navigateToRoom = (pin: string, replace = false) => {
+    setCurrentScreen('room');
+    navigateToPath(`/room/${encodeURIComponent(pin)}` as AppPath, replace);
   };
 
   useEffect(() => {
@@ -172,6 +182,36 @@ function App() {
       subscribedTeamRef.current = null;
     };
   }, [auth.session, room.pin, dispatch]);
+
+  useEffect(() => {
+    if (!auth.session || currentScreen !== 'room' || !routeRoomPin) {
+      return;
+    }
+    if (room.session?.pin === routeRoomPin) {
+      return;
+    }
+
+    let cancelled = false;
+    void apiClient.getRoom(routeRoomPin)
+      .then((session) => {
+        if (!cancelled) {
+          dispatch(setRoomSession(session));
+          setJoiningError(null);
+        }
+      })
+      .catch((error: ApiError) => {
+        if (cancelled) {
+          return;
+        }
+        dispatch(clearRoom());
+        dispatch(setRoomError(error.message));
+        navigateToScreen(auth.session?.role === 'ROLE_USER' ? 'dashboard' : 'join', true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.session, currentScreen, routeRoomPin, room.session?.pin, dispatch]);
 
   useEffect(() => {
     if (!socketRef.current || !room.session || !auth.session) {
@@ -267,7 +307,7 @@ function App() {
       });
       dispatch(setRoomSession(roomSession));
       setHostingQuizId(quizId);
-      navigateToScreen('room');
+      navigateToRoom(roomSession.pin);
     } catch (error) {
       dispatch(setRoomError((error as ApiError).message));
     }
@@ -281,7 +321,7 @@ function App() {
       const session = await apiClient.joinRoom(pin);
       dispatch(setRoomSession(session));
       setHostingQuizId(null);
-      navigateToScreen('room');
+      navigateToRoom(session.pin);
     } catch (error) {
       setJoiningError((error as Error).message);
     } finally {

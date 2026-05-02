@@ -139,6 +139,9 @@ export const apiClient = {
       body: JSON.stringify(body),
     });
   },
+  getRoom(pin: string) {
+    return request<GameSessionResponse>(`/api/rooms/${pin}`);
+  },
   joinRoom(pin: string) {
     return request<GameSessionResponse>(`/api/rooms/${pin}/join`, {
       method: 'POST',
