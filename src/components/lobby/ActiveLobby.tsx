@@ -1,4 +1,5 @@
 import React from 'react';
+import { createAvatar } from '@dicebear/core';
 import {
   closestCenter,
   DndContext,
@@ -10,6 +11,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
+import { botttsNeutral } from '@dicebear/collection';
 import { CSS } from '@dnd-kit/utilities';
 import { Brain, Crown, GripVertical, Play, Shuffle, Users } from 'lucide-react';
 import type { GameSessionResponse, PlayerSlotResponse, TeamStateResponse } from '../../types/api';
@@ -58,6 +60,14 @@ function roleTone(team: TeamStateResponse, participant: PlayerSlotResponse) {
     return 'border-[var(--color-analyst-blue)] bg-[var(--color-analyst-blue-bg)]';
   }
   return 'border-border bg-white';
+}
+
+function generateAvatarSvg(seed: string) {
+  return createAvatar(botttsNeutral, {
+    seed,
+    radius: 20,
+    backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+  }).toString();
 }
 
 export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
@@ -124,9 +134,17 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Room PIN</p>
             <h1 className="text-4xl font-black tracking-[0.3em] text-[var(--color-text-primary)]">{session.pin}</h1>
-            <p className="mt-1 text-sm font-medium text-[var(--color-text-secondary)]">
-              {isHost ? `Hosting as ${hostDisplayName}` : currentPlayer ? `Joined as ${currentPlayer.displayName}` : 'Synchronizing participant identity...'}
-            </p>
+            <div className="mt-1 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+              {!isHost && currentPlayer && (
+                <div
+                  className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-border)] bg-background shrink-0"
+                  dangerouslySetInnerHTML={{ __html: generateAvatarSvg(currentPlayer.avatarUrl || currentPlayer.displayName) }}
+                />
+              )}
+              <p>
+                {isHost ? `Hosting as ${hostDisplayName}` : currentPlayer ? `Joined as ${currentPlayer.displayName}` : 'Synchronizing participant identity...'}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {isHost && (
@@ -326,6 +344,7 @@ const DraggableParticipantCard: React.FC<{
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: participant.participantId,
   });
+  const avatarSeed = participant.avatarUrl || participant.displayName;
 
   return (
     <div
@@ -342,6 +361,10 @@ const DraggableParticipantCard: React.FC<{
         >
           <GripVertical size={18} />
         </button>
+        <div
+          className="w-11 h-11 rounded-full overflow-hidden border border-border bg-background shrink-0"
+          dangerouslySetInnerHTML={{ __html: generateAvatarSvg(avatarSeed) }}
+        />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-text-primary">{participant.displayName}</p>
           <p className="text-sm text-text-muted">{participant.guest ? 'Guest player' : participant.provider}</p>

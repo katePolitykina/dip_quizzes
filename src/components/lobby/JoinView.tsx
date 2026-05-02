@@ -1,15 +1,34 @@
 import React, { useState } from 'react';
+import { createAvatar } from '@dicebear/core';
+import { botttsNeutral } from '@dicebear/collection';
+import { Check } from 'lucide-react';
 import { GoogleSignInButton } from '../auth/GoogleSignInButton';
 
 interface JoinViewProps {
-  onJoin: (pin: string, nickname: string) => void;
+  onJoin: (pin: string, nickname: string, avatarSeed: string) => void;
   isJoining?: boolean;
   error?: string | null;
+}
+
+const AVATAR_PRESETS = [
+  'felix', 'avery', 'sam', 'riley', 'jordan',
+  'morgan', 'alex', 'casey', 'drew', 'quinn',
+  'taylor', 'dakota', 'reese', 'skyler', 'blake',
+  'charlie',
+];
+
+function generateAvatarSvg(seed: string): string {
+  return createAvatar(botttsNeutral, {
+    seed,
+    radius: 20,
+    backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+  }).toString();
 }
 
 export const JoinView: React.FC<JoinViewProps> = ({ onJoin, isJoining = false, error }) => {
   const [pin, setPin] = useState('');
   const [nickname, setNickname] = useState('');
+  const [selectedAvatarSeed, setSelectedAvatarSeed] = useState(AVATAR_PRESETS[0]);
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers, max 6 digits
@@ -20,7 +39,7 @@ export const JoinView: React.FC<JoinViewProps> = ({ onJoin, isJoining = false, e
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin.length === 6 && nickname.trim().length > 0) {
-      onJoin(pin, nickname.trim());
+      onJoin(pin, nickname.trim(), selectedAvatarSeed);
     }
   };
 
@@ -55,6 +74,42 @@ export const JoinView: React.FC<JoinViewProps> = ({ onJoin, isJoining = false, e
               maxLength={20}
               className="w-full text-center text-xl sm:text-2xl font-semibold text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] border-2 border-[var(--color-border)] rounded-xl py-3 focus:outline-none focus:border-[var(--color-violet)] focus:ring-4 focus:ring-[var(--color-violet)]/20 transition-all bg-transparent"
             />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col items-center gap-3">
+              <div
+                className="w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-surface ring-2 ring-[var(--color-violet)]/20 bg-background"
+                dangerouslySetInnerHTML={{ __html: generateAvatarSvg(selectedAvatarSeed) }}
+              />
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">Choose your avatar</p>
+            </div>
+
+            <div className="grid grid-cols-8 gap-2">
+              {AVATAR_PRESETS.map((seed) => (
+                <button
+                  key={seed}
+                  type="button"
+                  onClick={() => setSelectedAvatarSeed(seed)}
+                  className={`relative aspect-square rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 focus:outline-none ${
+                    selectedAvatarSeed === seed
+                      ? 'border-[var(--color-violet)] shadow-md shadow-[var(--color-violet)]/20 scale-110'
+                      : 'border-[var(--color-border)] hover:border-[var(--color-violet)]'
+                  }`}
+                  title={seed}
+                >
+                  <div
+                    className="w-full h-full bg-background"
+                    dangerouslySetInnerHTML={{ __html: generateAvatarSvg(seed) }}
+                  />
+                  {selectedAvatarSeed === seed && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-violet)]/20">
+                      <Check size={14} strokeWidth={3} className="text-[var(--color-violet)]" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           <button

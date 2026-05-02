@@ -48,9 +48,9 @@ export const register = createAsyncThunk(
 
 export const loginAsGuest = createAsyncThunk(
   'auth/guest',
-  async (nickname: string, { rejectWithValue }) => {
+  async (request: { nickname: string; avatarUrl?: string | null }, { rejectWithValue }) => {
     try {
-      return await apiClient.guest({ nickname });
+      return await apiClient.guest(request);
     } catch (error) {
       return rejectWithValue((error as ApiError).message);
     }

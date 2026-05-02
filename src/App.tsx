@@ -351,11 +351,11 @@ function App() {
     }
   };
 
-  const handleJoin = async (pin: string, nickname: string) => {
+  const handleJoin = async (pin: string, nickname: string, avatarSeed: string) => {
     setJoiningError(null);
     setIsJoining(true);
     try {
-      await dispatch(loginAsGuest(nickname)).unwrap();
+      await dispatch(loginAsGuest({ nickname, avatarUrl: avatarSeed })).unwrap();
       const session = await apiClient.joinRoom(pin);
       dispatch(setRoomSession(session));
       setHostingQuizId(null);

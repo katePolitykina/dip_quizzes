@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createAvatar } from '@dicebear/core';
+import { botttsNeutral } from '@dicebear/collection';
 import { BarChart3, Pause, Play, ShieldX, Sparkles } from 'lucide-react';
 import type {
   ConfidenceLevel,
@@ -7,6 +9,14 @@ import type {
   TeamAnswerEventPayload,
   TeamStateResponse,
 } from '../../types/api';
+
+function generateAvatarSvg(seed: string) {
+  return createAvatar(botttsNeutral, {
+    seed,
+    radius: 20,
+    backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+  }).toString();
+}
 
 interface GameSessionScreenProps {
   session: GameSessionResponse;
@@ -79,12 +89,21 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             <div className="mt-8">
               <h2 className="text-2xl font-black text-text-primary">Player Scoreboard</h2>
               <div className="mt-4 space-y-3">
-                {session.finalReport.players.map((player) => (
+                {session.finalReport.players.map((player) => {
+                  const participantSnapshot = session.participants.find((entry) => entry.participantId === player.participantId);
+                  const avatarSeed = participantSnapshot?.avatarUrl || player.displayName;
+                  return (
                   <div key={player.participantId} className="rounded-2xl border border-border bg-white px-5 py-4 flex items-center justify-between gap-4">
-                    <div>
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-14 h-14 rounded-full overflow-hidden border border-border bg-background shrink-0"
+                        dangerouslySetInnerHTML={{ __html: generateAvatarSvg(avatarSeed) }}
+                      />
+                      <div>
                       <p className="text-sm font-bold uppercase tracking-[0.2em] text-text-muted">#{player.rank}</p>
                       <h3 className="mt-1 text-xl font-black text-text-primary">{player.displayName}</h3>
                       <p className="text-sm text-text-secondary">{player.teamName ?? 'No team assigned'}</p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-black text-success">{player.correctAnswers} correct</p>
@@ -96,7 +115,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                       </p>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
             <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -319,7 +338,7 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
             onTogglePause={onTogglePause}
             onKick={onKick}
           />
-          <LeaderboardCard teams={session.teams} />
+          <LeaderboardCard teams={session.teams} participants={session.participants} playInTeams={session.playInTeams} />
         </aside>
       </div>
 
@@ -398,7 +417,7 @@ const HostPanel: React.FC<{
   <div className="card p-5">
     <div className="flex items-center gap-2 text-text-primary">
       <BarChart3 size={20} />
-      <h2 className="text-xl font-black">Host Analytics</h2>
+      <h2 className="text-xl font-black">Analytics</h2>
     </div>
     <div className="mt-5 rounded-3xl bg-background p-5">
       <div className="flex items-center justify-between">
@@ -420,11 +439,6 @@ const HostPanel: React.FC<{
     <div className="mt-5 rounded-3xl bg-background p-5">
       <p className="text-sm font-semibold text-text-muted">{team ? 'Your team' : 'Host view'}</p>
       <h3 className="mt-1 text-2xl font-black text-text-primary">{team ? team.name : 'Moderation only'}</h3>
-      <p className="mt-2 text-text-secondary">
-        {team
-          ? `Selected: ${team.selectedAnswerId ?? 'none'} | Confirmed: ${team.confirmedAnswerId ?? 'none'}`
-          : 'You are not assigned to a player slot in this room.'}
-      </p>
     </div>
 
     {isHost && (
@@ -459,22 +473,36 @@ const HostPanel: React.FC<{
   </div>
 );
 
-const LeaderboardCard: React.FC<{ teams: TeamStateResponse[] }> = ({ teams }) => (
+const LeaderboardCard: React.FC<{ teams: TeamStateResponse[]; participants: PlayerSlotResponse[]; playInTeams: boolean }> = ({ teams, participants, playInTeams }) => (
   <div className="card p-5">
     <h2 className="text-xl font-black text-text-primary">Live Scoreboard</h2>
     <div className="mt-4 space-y-3">
       {teams
         .slice()
         .sort((left, right) => right.totalScore - left.totalScore)
-        .map((team, index) => (
-          <div key={team.teamId} className="rounded-2xl border border-border bg-background px-4 py-3 flex items-center justify-between">
+        .map((team, index) => {
+          const teamParticipants = participants.filter((participant) => participant.teamId === team.teamId);
+          return (
+          <div key={team.teamId} className="rounded-2xl border border-border bg-background px-4 py-3 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.2em] text-text-muted">#{index + 1}</p>
-              <p className="font-black text-text-primary">{team.name}</p>
+              {playInTeams && <p className="font-black text-text-primary">{team.name}</p>}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {teamParticipants.map((participant) => (
+                  <div key={participant.participantId} className="flex items-center gap-2 rounded-full bg-white pr-3">
+                    <div
+                      className="w-8 h-8 rounded-full overflow-hidden border border-border bg-white shrink-0"
+                      title={participant.displayName}
+                      dangerouslySetInnerHTML={{ __html: generateAvatarSvg(participant.avatarUrl || participant.displayName) }}
+                    />
+                    <p className="text-sm font-semibold text-text-secondary">{participant.displayName}</p>
+                  </div>
+                ))}
+              </div>
             </div>
             <span className="text-2xl font-black text-indigo">{team.totalScore.toFixed(2)}</span>
           </div>
-        ))}
+        )})}
     </div>
   </div>
 );
