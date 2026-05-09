@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { UploadCloud, Image as ImageIcon, X } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import { AnswerCard } from './AnswerCard';
+import { resolveAssetUrl } from '../../lib/assetUrl';
 
 export const CenterStage: React.FC = () => {
   const { state, dispatch } = useQuiz();
@@ -80,7 +81,7 @@ export const CenterStage: React.FC = () => {
             {activeQuestion.image ? (
               <>
                 <img
-                  src={activeQuestion.image}
+                  src={resolveAssetUrl(activeQuestion.image)}
                   alt="Question media"
                   className="w-full h-full object-contain p-2"
                 />

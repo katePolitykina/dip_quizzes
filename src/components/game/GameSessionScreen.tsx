@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createAvatar } from '@dicebear/core';
 import { botttsNeutral } from '@dicebear/collection';
 import { BarChart3, Pause, Play, ShieldX, Sparkles } from 'lucide-react';
+import { resolveAssetUrl } from '../../lib/assetUrl';
 import type {
   ConfidenceLevel,
   GameSessionResponse,
@@ -226,6 +227,18 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
               </div>
             </div>
           </div>
+
+          {currentQuestion.imageUrl && (
+            <div className="card p-4">
+              <div className="flex justify-center rounded-3xl bg-background p-3">
+                <img
+                  src={resolveAssetUrl(currentQuestion.imageUrl)}
+                  alt="Question media"
+                  className="max-h-[28rem] w-full rounded-2xl object-contain"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-4">
             {visibleAnswers.map((answer) => {

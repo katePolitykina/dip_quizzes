@@ -17,6 +17,7 @@ const backendHttpUrl = apiBaseUrl || DEFAULT_BACKEND_HTTP_URL;
 
 export const appConfig = {
   apiBaseUrl,
+  backendHttpUrl,
   oauthBaseUrl: readEnvValue(import.meta.env.VITE_OAUTH_BASE_URL) ?? backendHttpUrl,
   wsBaseUrl: readEnvValue(import.meta.env.VITE_WS_BASE_URL) ?? toWebSocketBaseUrl(backendHttpUrl),
 };
