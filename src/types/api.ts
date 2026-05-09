@@ -220,6 +220,7 @@ export interface PlayerSlotResponse {
   teamId?: string | null;
   teamRole?: TeamRole | null;
   selectedAnswerId?: string | null;
+  selectedAnswerCorrect?: boolean | null;
   questionAnswers: PlayerQuestionAnswerResponse[];
 }
 

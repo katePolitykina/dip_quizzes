@@ -232,12 +232,15 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
               const isSelected = selectedAnswerId === answer.id;
               const isTeamSelected = teamSelectedAnswerId === answer.id;
               const isConfirmed = confirmedAnswerId === answer.id;
+              const selectedCorrect = isSelected ? participant?.selectedAnswerCorrect ?? null : null;
               const teamVoteCount = team?.answerVoteCounts?.[answer.id] ?? 0;
               const confirmedCorrect = isConfirmed
                 ? immediateConfirmedCorrect ?? team?.confirmedAnswerCorrect ?? answer.correct ?? null
                 : null;
               const isConfirmedCorrect = confirmedCorrect === true;
               const isConfirmedWrong = confirmedCorrect === false;
+              const isSelectedCorrect = selectedCorrect === true;
+              const isSelectedWrong = selectedCorrect === false;
               return (
                 <button
                   key={answer.id}
@@ -251,6 +254,10 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                     isConfirmedCorrect
                       ? 'border-success bg-success/10'
                       : isConfirmedWrong
+                        ? 'border-error bg-error/10'
+                      : isSelectedCorrect
+                        ? 'border-success bg-success/10'
+                      : isSelectedWrong
                         ? 'border-error bg-error/10'
                       : isTeamSelected
                         ? 'border-[var(--color-captain-gold)] bg-[var(--color-captain-gold-bg)]'
@@ -272,12 +279,20 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                       ? 'text-success'
                       : isConfirmedWrong
                         ? 'text-error'
+                      : isSelectedCorrect
+                        ? 'text-success'
+                      : isSelectedWrong
+                        ? 'text-error'
                         : 'text-text-muted'
                   }`}>
                     {isConfirmedCorrect
                       ? 'Confirmed - correct'
                       : isConfirmedWrong
                         ? 'Confirmed - incorrect'
+                        : isSelectedCorrect
+                          ? 'Your choice was correct'
+                        : isSelectedWrong
+                          ? 'Your choice was incorrect'
                         : isTeamSelected
                           ? 'Captain choice'
                         : isConfirmed
