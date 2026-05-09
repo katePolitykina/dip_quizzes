@@ -7,9 +7,10 @@ interface QuizLibraryProps {
   quizzes: QuizSnippet[];
   onHostGame: (quizId: string, quizTitle: string) => void;
   onEditQuiz: (quizId: string) => void;
+  onDeleteQuiz: (quizId: string, quizTitle: string) => void;
 }
 
-export const QuizLibrary: React.FC<QuizLibraryProps> = ({ quizzes, onHostGame, onEditQuiz }) => {
+export const QuizLibrary: React.FC<QuizLibraryProps> = ({ quizzes, onHostGame, onEditQuiz, onDeleteQuiz }) => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-baseline justify-between border-b border-border pb-4">
@@ -26,7 +27,13 @@ export const QuizLibrary: React.FC<QuizLibraryProps> = ({ quizzes, onHostGame, o
       ) : (
         <div className="flex flex-col gap-4">
           {quizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} onHostGame={onHostGame} onEditQuiz={onEditQuiz} />
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              onHostGame={onHostGame}
+              onEditQuiz={onEditQuiz}
+              onDeleteQuiz={onDeleteQuiz}
+            />
           ))}
         </div>
       )}

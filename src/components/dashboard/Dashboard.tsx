@@ -13,6 +13,7 @@ interface DashboardProps {
   onJoinLobby: () => void;
   onHostGame: (quizId: string, settings: HostGameSettings) => void;
   onEditQuiz: (quizId: string) => void;
+  onDeleteQuiz: (quizId: string, quizTitle: string) => void;
   user: UserMeResponse | null;
   quizzes: QuizSnippet[];
   isGuest: boolean;
@@ -29,6 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onJoinLobby,
   onHostGame,
   onEditQuiz,
+  onDeleteQuiz,
   user,
   quizzes,
   isGuest,
@@ -107,6 +109,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             quizzes={quizzes}
             onHostGame={(quizId, quizTitle) => setHostingSelection({ quizId, quizTitle })}
             onEditQuiz={onEditQuiz}
+            onDeleteQuiz={onDeleteQuiz}
           />
         </section>
 

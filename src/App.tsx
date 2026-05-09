@@ -17,7 +17,7 @@ import {
   register,
   updateProfile,
 } from './store/authSlice';
-import { clearActiveQuiz, fetchQuiz, fetchQuizzes, saveQuiz } from './store/quizzesSlice';
+import { clearActiveQuiz, fetchQuiz, fetchQuizzes, removeQuiz, saveQuiz } from './store/quizzesSlice';
 import {
   clearRoom,
   markKicked,
@@ -440,6 +440,12 @@ function App() {
         onJoinLobby={() => navigateToScreen('join')}
         onHostGame={handleHostGame}
         onEditQuiz={handleEditQuiz}
+        onDeleteQuiz={(quizId, quizTitle) => {
+          if (!window.confirm(`Delete "${quizTitle}"? This cannot be undone.`)) {
+            return;
+          }
+          void dispatch(removeQuiz(quizId));
+        }}
         user={auth.profile}
         quizzes={quizzes.items}
         isGuest={auth.session?.role === 'ROLE_GUEST'}
