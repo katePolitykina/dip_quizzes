@@ -37,13 +37,10 @@ export const AnswerCard: React.FC<AnswerCardProps> = ({
   onToggleCorrect,
 }) => {
   const theme = colorMap[answer.color];
-  const isEmpty = answer.text.trim() === '';
 
   return (
     <div
-      className={`relative rounded-[16px] h-40 shadow-sm border-2 overflow-hidden transition-all duration-200 flex flex-col ${
-        isEmpty ? 'border-error shadow-error/10' : theme.border
-      } ${theme.bg}`}
+      className={`relative rounded-[16px] h-40 shadow-sm border-2 overflow-hidden transition-all duration-200 flex flex-col ${theme.border} ${theme.bg}`}
     >
       <div className="flex-1 p-3 flex flex-col relative">
         {/* Correct toggle */}
@@ -64,15 +61,9 @@ export const AnswerCard: React.FC<AnswerCardProps> = ({
         <textarea
           value={answer.text}
           onChange={(e) => onChangeText(e.target.value)}
-          placeholder={`Add answer...`}
+          placeholder="Add answer..."
           className={`w-full h-full bg-transparent resize-none outline-none font-semibold text-lg pt-10 px-2 placeholder-white/60 ${theme.text}`}
         />
-        
-        {isEmpty && (
-          <div className="absolute bottom-2 right-2 text-xs font-bold text-white bg-error px-2 py-1 rounded-[8px]">
-            Required
-          </div>
-        )}
       </div>
     </div>
   );

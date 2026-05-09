@@ -16,12 +16,20 @@ export function mapQuizDetailToEditorState(quiz: QuizDetailResponse): Quiz {
       image: question.imageUrl ?? undefined,
       weight: question.pointsWeight,
       timerOverride: question.timerOverride ?? undefined,
-      answers: question.answers.map((answer, index) => ({
-        id: answer.id,
-        text: answer.text,
-        isCorrect: answer.isCorrect,
-        color: ANSWER_COLORS[index] ?? 'green',
-      })),
+      answers: [
+        ...question.answers.map((answer, index) => ({
+          id: answer.id,
+          text: answer.text,
+          isCorrect: answer.isCorrect,
+          color: ANSWER_COLORS[index] ?? 'green',
+        })),
+        ...Array.from({ length: Math.max(0, 4 - question.answers.length) }, (_, offset) => ({
+          id: `ans-${crypto.randomUUID()}`,
+          text: '',
+          isCorrect: false,
+          color: ANSWER_COLORS[question.answers.length + offset] ?? 'green',
+        })),
+      ],
     })),
   };
 }
@@ -34,10 +42,12 @@ export function mapEditorStateToQuizUpsertRequest(quiz: Quiz): QuizUpsertRequest
       imageUrl: question.image || null,
       pointsWeight: question.weight,
       timerOverride: question.timerOverride ?? null,
-      answers: question.answers.map((answer) => ({
-        text: answer.text,
-        isCorrect: answer.isCorrect,
-      })),
+      answers: question.answers
+        .filter((answer) => answer.text.trim().length > 0)
+        .map((answer) => ({
+          text: answer.text.trim(),
+          isCorrect: answer.isCorrect,
+        })),
     })),
   };
 }
