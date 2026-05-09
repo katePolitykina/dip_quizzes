@@ -234,6 +234,8 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
               const isConfirmed = confirmedAnswerId === answer.id;
               const selectedCorrect = isSelected ? participant?.selectedAnswerCorrect ?? null : null;
               const teamVoteCount = team?.answerVoteCounts?.[answer.id] ?? 0;
+              const hostVoteCount = session.teams.reduce((sum, candidate) => sum + (candidate.answerVoteCounts?.[answer.id] ?? 0), 0);
+              const visibleVoteCount = isHost && !participant ? hostVoteCount : teamVoteCount;
               const confirmedCorrect = isConfirmed
                 ? immediateConfirmedCorrect ?? team?.confirmedAnswerCorrect ?? answer.correct ?? null
                 : null;
@@ -268,9 +270,9 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-lg font-bold text-text-primary">{answer.text}</p>
-                    {teamVoteCount > 0 && (
+                    {visibleVoteCount > 0 && (
                       <span className="shrink-0 rounded-full bg-background px-3 py-1 text-xs font-bold text-text-secondary">
-                        {teamVoteCount} vote{teamVoteCount === 1 ? '' : 's'}
+                        {visibleVoteCount} vote{visibleVoteCount === 1 ? '' : 's'}
                       </span>
                     )}
                   </div>
@@ -297,6 +299,8 @@ export const GameSessionScreen: React.FC<GameSessionScreenProps> = ({
                           ? 'Captain choice'
                         : isConfirmed
                           ? 'Confirmed'
+                          : isHost && !participant && visibleVoteCount > 0
+                            ? `${visibleVoteCount} vote${visibleVoteCount === 1 ? '' : 's'}`
                           : isSelected
                             ? 'Selected by you'
                             : canAnswer
