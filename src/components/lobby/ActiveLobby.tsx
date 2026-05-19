@@ -15,6 +15,8 @@ import { botttsNeutral } from '@dicebear/collection';
 import { CSS } from '@dnd-kit/utilities';
 import { Brain, Crown, GripVertical, Play, Shuffle, Users } from 'lucide-react';
 import type { GameSessionResponse, PlayerSlotResponse, TeamStateResponse } from '../../types/api';
+import { useI18n } from '../../i18n/I18nProvider';
+import type { Messages } from '../../i18n/types';
 
 interface ActiveLobbyProps {
   session: GameSessionResponse;
@@ -30,20 +32,26 @@ interface ActiveLobbyProps {
 
 const WAITING_ROOM_ID = 'waiting-room';
 
-function resolveRoleLabel(team: TeamStateResponse, participant: PlayerSlotResponse) {
+function resolveRoleLabel(team: TeamStateResponse, participant: PlayerSlotResponse, messages: Messages) {
   const isCaptain = team.captainParticipantId === participant.participantId;
   const isAnalyst = team.analystParticipantId === participant.participantId;
 
   if (isCaptain && isAnalyst) {
-    return 'CAPTAIN / ANALYST';
+    return messages.lobby.captainAnalyst;
   }
   if (isCaptain) {
-    return 'CAPTAIN';
+    return messages.lobby.captain;
   }
   if (isAnalyst) {
-    return 'ANALYST';
+    return messages.lobby.analyst;
   }
-  return participant.teamRole ?? 'MEMBER';
+  if (participant.teamRole === 'CAPTAIN') {
+    return messages.lobby.captain;
+  }
+  if (participant.teamRole === 'ANALYST') {
+    return messages.lobby.analyst;
+  }
+  return messages.lobby.member;
 }
 
 function roleTone(team: TeamStateResponse, participant: PlayerSlotResponse) {
@@ -59,7 +67,7 @@ function roleTone(team: TeamStateResponse, participant: PlayerSlotResponse) {
   if (isAnalyst) {
     return 'border-[var(--color-analyst-blue)] bg-[var(--color-analyst-blue-bg)]';
   }
-  return 'border-border bg-white';
+  return 'border-white/90 bg-[rgba(255,255,255,0.66)]';
 }
 
 function generateAvatarSvg(seed: string) {
@@ -81,6 +89,7 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
   onStartQuiz,
   onBackToDashboard,
 }) => {
+  const { messages } = useI18n();
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor)
@@ -128,21 +137,23 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      <header className="bg-[var(--color-surface)] border-b border-[var(--color-border)] sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+    <div className="screen-shell">
+      <header className="sticky top-0 z-10">
+        <div className="card mx-auto mt-4 flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Room PIN</p>
-            <h1 className="text-4xl font-black tracking-[0.3em] text-[var(--color-text-primary)]">{session.pin}</h1>
-            <div className="mt-1 flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
+            <p className="section-label">{messages.lobby.roomPin}</p>
+            <div className="mt-2 inline-flex items-center rounded-full pin-badge px-5 py-3">
+              <h1 className="table-numbers text-3xl font-black tracking-[0.3em] text-[var(--color-midnight)]">{session.pin}</h1>
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-sm font-bold text-text-secondary">
               {!isHost && currentPlayer && (
                 <div
-                  className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-border)] bg-background shrink-0"
+                  className="w-8 h-8 rounded-full overflow-hidden border border-white/90 bg-white/30 shrink-0"
                   dangerouslySetInnerHTML={{ __html: generateAvatarSvg(currentPlayer.avatarUrl || currentPlayer.displayName) }}
                 />
               )}
               <p>
-                {isHost ? `Hosting as ${hostDisplayName}` : currentPlayer ? `Joined as ${currentPlayer.displayName}` : 'Synchronizing participant identity...'}
+                {isHost ? messages.lobby.hostingAs(hostDisplayName) : currentPlayer ? messages.lobby.joinedAs(currentPlayer.displayName) : messages.lobby.synchronizing}
               </p>
             </div>
           </div>
@@ -153,22 +164,22 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
                   <button
                     onClick={onAutoDistribute}
                     disabled={!canAutoDistribute}
-                    className="btn-secondary px-5 bg-white border border-border text-text-primary disabled:opacity-50"
+                    className="btn-secondary btn-glass px-5 disabled:opacity-40"
                   >
                     <span className="inline-flex items-center gap-2">
                       <Shuffle size={18} />
-                      Auto-distribute Teams
+                      {messages.lobby.autoDistribute}
                     </span>
                   </button>
                 )}
                 <button
                   onClick={onStartQuiz}
                   disabled={!hasReadyTeams}
-                  className="btn-primary px-6 bg-[var(--color-success)] text-white disabled:opacity-50"
+                  className="btn-primary btn-cta px-6 disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Play size={18} fill="currentColor" />
-                    Start Game
+                    {messages.lobby.startGame}
                   </span>
                 </button>
               </>
@@ -176,9 +187,9 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
             {onBackToDashboard && (
               <button
                 onClick={onBackToDashboard}
-                className="text-sm font-semibold text-[var(--color-text-muted)] underline hover:text-[var(--color-text-primary)]"
+                className="btn-secondary btn-glass px-4 text-sm"
               >
-                Exit room
+                {messages.lobby.exitRoom}
               </button>
             )}
           </div>
@@ -186,16 +197,22 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
-        <section className="rounded-2xl border border-border bg-white px-5 py-4">
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-text-muted">
-            <span>Mode: {session.playInTeams ? `${configuredTeamCount} teams` : 'Solo'}</span>
-            {session.playInTeams && (
-              <>
-                <span>{waitingPlayers.length} waiting</span>
-                {!hasEveryoneAssigned && <span>Assign every player before starting</span>}
-              </>
-            )}
-          </div>
+        <section className="card px-5 py-4 flex flex-wrap items-center gap-3">
+          <span className="glass-inset rounded-full px-3 py-1.5 text-sm font-semibold text-[var(--color-text-secondary)]">
+            {session.playInTeams ? messages.lobby.modeTeams(configuredTeamCount) : messages.lobby.modeSolo}
+          </span>
+          {session.playInTeams && (
+            <>
+              <span className="glass-inset rounded-full px-3 py-1.5 text-sm font-semibold text-[var(--color-text-secondary)]">
+                {messages.lobby.waitingCount(waitingPlayers.length)}
+              </span>
+              {!hasEveryoneAssigned && (
+                <span className="rounded-full bg-[rgba(255,212,179,0.45)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-secondary)]">
+                  {messages.lobby.assignAllPlayersToStart}
+                </span>
+              )}
+            </>
+          )}
         </section>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -205,9 +222,9 @@ export const ActiveLobby: React.FC<ActiveLobbyProps> = ({
             <section className="flex flex-col gap-5">
               {session.teams.length === 0 ? (
                 <div className="card p-8">
-                  <h2 className="text-2xl font-black text-text-primary">No team slots available</h2>
+                  <h2 className="text-2xl font-black text-text-primary">{messages.lobby.noTeamSlots}</h2>
                   <p className="mt-3 text-text-secondary">
-                    This room does not currently expose any teams for manual assignment.
+                    {messages.lobby.noTeamSlotsDescription}
                   </p>
                 </div>
               ) : (
@@ -233,18 +250,19 @@ const WaitingRoomColumn: React.FC<{
   players: PlayerSlotResponse[];
   playInTeams: boolean;
 }> = ({ players, playInTeams }) => {
+  const { messages } = useI18n();
   const { isOver, setNodeRef } = useDroppable({ id: WAITING_ROOM_ID });
 
   return (
-    <section className="card p-5 h-fit">
+    <section className="card h-fit p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-text-primary">Waiting Room</h2>
-        <span className="text-sm font-semibold text-text-muted">{players.length} waiting</span>
+        <h2 className="text-xl font-black text-text-primary">{messages.lobby.waitingRoom}</h2>
+        <span className="text-sm font-semibold text-text-muted">{messages.lobby.waitingCount(players.length)}</span>
       </div>
       <div
         ref={setNodeRef}
         className={`mt-4 min-h-56 rounded-2xl border-2 border-dashed p-3 transition-colors ${
-          isOver ? 'border-indigo bg-indigo/5' : 'border-border bg-background'
+          isOver ? 'border-[var(--color-indigo)] bg-[rgba(214,194,255,0.18)]' : 'empty-dashed bg-[rgba(255,255,255,0.36)]'
         }`}
       >
         <div className="flex flex-col gap-3">
@@ -255,7 +273,7 @@ const WaitingRoomColumn: React.FC<{
             <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-text-muted">
               <Users size={28} />
               <p className="text-sm font-semibold">
-                {playInTeams ? 'Drop a player here to remove them from a team.' : 'Each player has their own scoreline.'}
+                {playInTeams ? messages.lobby.waitingRoomHintTeams : messages.lobby.waitingRoomHintSolo}
               </p>
             </div>
           )}
@@ -278,6 +296,7 @@ const LobbyTeamCard: React.FC<LobbyTeamCardProps> = ({
   isHost,
   onUpdateRoles,
 }) => {
+  const { messages } = useI18n();
   const { isOver, setNodeRef } = useDroppable({ id: `team-drop-${team.teamId}` });
   const captainParticipantId = team.captainParticipantId ?? participants[0]?.participantId;
   const analystParticipantId = team.analystParticipantId ?? participants[1]?.participantId ?? participants[0]?.participantId;
@@ -287,14 +306,14 @@ const LobbyTeamCard: React.FC<LobbyTeamCardProps> = ({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-black text-text-primary">{team.name}</h3>
-          <p className="text-sm text-text-muted">{participants.length} players assigned</p>
+          <p className="text-sm text-text-muted">{messages.lobby.teamPlayersAssigned(participants.length)}</p>
         </div>
       </div>
 
       <div
         ref={setNodeRef}
         className={`mt-5 min-h-32 rounded-2xl border-2 border-dashed p-3 transition-colors ${
-          isOver ? 'border-indigo bg-indigo/5' : 'border-border/70'
+          isOver ? 'border-[var(--color-indigo)] bg-[rgba(214,194,255,0.18)]' : 'empty-dashed'
         }`}
       >
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -303,7 +322,7 @@ const LobbyTeamCard: React.FC<LobbyTeamCardProps> = ({
               key={participant.participantId}
               participant={participant}
               toneClass={roleTone(team, participant)}
-              roleLabel={resolveRoleLabel(team, participant)}
+              roleLabel={resolveRoleLabel(team, participant, messages)}
               isHost={isHost}
               isCaptain={captainParticipantId === participant.participantId}
               isAnalyst={analystParticipantId === participant.participantId}
@@ -314,7 +333,7 @@ const LobbyTeamCard: React.FC<LobbyTeamCardProps> = ({
         </div>
         {participants.length === 0 && (
           <p className="flex min-h-24 items-center justify-center text-sm font-semibold text-text-muted">
-            Drop players here
+            {messages.lobby.dropPlayersHere}
           </p>
         )}
       </div>
@@ -333,7 +352,7 @@ const DraggableParticipantCard: React.FC<{
   onAssignAnalyst?: () => void;
 }> = ({
   participant,
-  toneClass = 'border-border bg-white',
+  toneClass = 'border-white/90 bg-[rgba(255,255,255,0.66)]',
   roleLabel,
   isHost = false,
   isCaptain = false,
@@ -341,6 +360,7 @@ const DraggableParticipantCard: React.FC<{
   onAssignCaptain,
   onAssignAnalyst,
 }) => {
+  const { messages } = useI18n();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: participant.participantId,
   });
@@ -362,12 +382,12 @@ const DraggableParticipantCard: React.FC<{
           <GripVertical size={18} />
         </button>
         <div
-          className="w-11 h-11 rounded-full overflow-hidden border border-border bg-background shrink-0"
+          className="w-11 h-11 rounded-full overflow-hidden border border-white/90 bg-background shrink-0"
           dangerouslySetInnerHTML={{ __html: generateAvatarSvg(avatarSeed) }}
         />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-text-primary">{participant.displayName}</p>
-          <p className="text-sm text-text-muted">{participant.guest ? 'Guest player' : participant.provider}</p>
+          <p className="text-sm text-text-muted">{participant.guest ? messages.lobby.guestPlayer : participant.provider}</p>
           {roleLabel && (
             <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
               {roleLabel}
@@ -379,24 +399,24 @@ const DraggableParticipantCard: React.FC<{
             <button
               type="button"
               onClick={onAssignCaptain}
-              className={`rounded-lg p-2 transition-colors ${
+              className={`rounded-full p-2 transition-colors ${
                 isCaptain
                   ? 'bg-[var(--color-captain-gold-bg)] text-[var(--color-captain-gold)]'
-                  : 'text-text-muted hover:bg-background hover:text-[var(--color-captain-gold)]'
+                  : 'text-text-muted hover:bg-white/60 hover:text-[var(--color-captain-gold)]'
               }`}
-              title="Assign captain"
+              title={messages.lobby.assignCaptain}
             >
               <Crown size={16} strokeWidth={isCaptain ? 2.6 : 2} />
             </button>
             <button
               type="button"
               onClick={onAssignAnalyst}
-              className={`rounded-lg p-2 transition-colors ${
+              className={`rounded-full p-2 transition-colors ${
                 isAnalyst
                   ? 'bg-[var(--color-analyst-blue-bg)] text-[var(--color-analyst-blue)]'
-                  : 'text-text-muted hover:bg-background hover:text-[var(--color-analyst-blue)]'
+                  : 'text-text-muted hover:bg-white/60 hover:text-[var(--color-analyst-blue)]'
               }`}
-              title="Assign analyst"
+              title={messages.lobby.assignAnalyst}
             >
               <Brain size={16} strokeWidth={isAnalyst ? 2.6 : 2} />
             </button>

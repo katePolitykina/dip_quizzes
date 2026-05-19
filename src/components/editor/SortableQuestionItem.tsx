@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2 } from 'lucide-react';
 import type { Question } from '../../types/quiz';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface SortableQuestionItemProps {
   question: Question;
@@ -19,6 +20,7 @@ export const SortableQuestionItem: React.FC<SortableQuestionItemProps> = ({
   onSelect,
   onDelete,
 }) => {
+  const { messages } = useI18n();
   const {
     attributes,
     listeners,
@@ -34,42 +36,44 @@ export const SortableQuestionItem: React.FC<SortableQuestionItemProps> = ({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`relative group flex items-center p-3 mb-2 rounded-[12px] border-2 cursor-pointer transition-all duration-200 ${
-        isActive
-          ? 'border-indigo bg-analyst-blue-bg'
-          : 'border-transparent bg-surface hover:border-border'
-      } ${isDragging ? 'opacity-50 z-50 shadow-xl' : 'shadow-sm'}`}
-      onClick={() => onSelect(question.id)}
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab p-1 mr-2 text-text-muted hover:text-text-secondary active:cursor-grabbing"
-      >
-        <GripVertical size={18} />
-      </div>
+    <div ref={setNodeRef} style={style} className={`${isDragging ? 'opacity-50 z-50' : ''}`}>
+      <div className={isActive ? 'chromatic-border mb-2' : 'mb-2'}>
+        <div
+          className={`relative group flex items-center rounded-[20px] p-3 cursor-pointer transition-all duration-200 ${
+            isActive
+              ? 'card'
+              : 'card bg-[rgba(255,255,255,0.42)] hover:bg-[rgba(255,255,255,0.6)]'
+          } ${isDragging ? 'shadow-xl' : ''}`}
+          onClick={() => onSelect(question.id)}
+        >
+          <div
+            {...attributes}
+            {...listeners}
+            className="mr-2 cursor-grab p-1 text-text-muted hover:text-text-secondary active:cursor-grabbing"
+          >
+            <GripVertical size={18} />
+          </div>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="text-xs font-bold text-text-muted mb-1">
-          Question {index + 1}
-        </div>
-        <div className="text-sm truncate text-text-primary font-medium">
-          {question.text || 'Empty Question'}
+          <div className="flex-1 overflow-hidden">
+            <div className="section-label mb-1">
+              {messages.editor.questionLabel(index + 1)}
+            </div>
+            <div className="truncate text-sm font-extrabold text-text-primary">
+              {question.text || messages.editor.emptyQuestion}
+            </div>
+          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(question.id);
+            }}
+            className="p-2 text-text-muted opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-error"
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(question.id);
-        }}
-        className="opacity-0 group-hover:opacity-100 p-2 text-text-muted hover:text-error transition-all duration-200"
-      >
-        <Trash2 size={16} />
-      </button>
     </div>
   );
 };

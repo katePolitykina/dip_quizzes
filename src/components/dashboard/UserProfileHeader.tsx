@@ -2,6 +2,7 @@ import React from 'react';
 import { Edit2 } from 'lucide-react';
 import { createAvatar } from '@dicebear/core';
 import { botttsNeutral } from '@dicebear/collection';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface UserProfileHeaderProps {
   displayName: string;
@@ -16,6 +17,7 @@ export const UserProfileHeader: React.FC<UserProfileHeaderProps> = ({
   avatarSeed,
   onEditProfile,
 }) => {
+  const { messages } = useI18n();
   const avatar = createAvatar(botttsNeutral, {
     seed: avatarSeed,
     radius: 50,
@@ -23,28 +25,29 @@ export const UserProfileHeader: React.FC<UserProfileHeaderProps> = ({
   });
 
   return (
-    <div className="card p-6 flex items-center justify-between hover:shadow-md transition-shadow duration-200">
+    <div className="card flex items-center justify-between overflow-hidden p-6">
       <div className="flex items-center gap-5">
         <div
-          className="w-16 h-16 rounded-full overflow-hidden shadow-inner bg-background border-2 border-surface ring-2 ring-border"
+          className="w-16 h-16 rounded-full overflow-hidden border border-white/90 shadow-lg shrink-0"
           dangerouslySetInnerHTML={{ __html: avatar.toString() }}
         />
         <div className="flex flex-col">
+          <p className="section-label">{messages.dashboard.profile}</p>
           <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">
             {displayName}
           </h2>
-          <p className="text-sm font-medium text-text-muted">
+          <p className="text-sm font-bold text-text-secondary">
             {email}
           </p>
         </div>
       </div>
-      
-      <button 
-        className="p-3 text-text-muted hover:text-indigo hover:bg-analyst-blue-bg rounded-[12px] transition-all duration-200 group"
-        aria-label="Edit Profile"
+
+      <button
+        className="btn-secondary btn-glass min-h-0 px-3 py-3 text-text-secondary"
+        aria-label={messages.dashboard.editProfile}
         onClick={onEditProfile}
       >
-        <Edit2 size={20} className="group-active:scale-95 transition-transform duration-200" />
+        <Edit2 size={20} />
       </button>
     </div>
   );

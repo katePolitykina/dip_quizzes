@@ -17,9 +17,11 @@ import {
 import { Plus } from 'lucide-react';
 import { useQuiz, createEmptyQuestion } from '../../context/QuizContext';
 import { SortableQuestionItem } from './SortableQuestionItem';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export const LeftPanel: React.FC = () => {
   const { state, dispatch } = useQuiz();
+  const { messages } = useI18n();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -48,9 +50,10 @@ export const LeftPanel: React.FC = () => {
   };
 
   return (
-    <div className="w-80 flex flex-col bg-background border-r border-border h-full overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-bold text-text-primary">Questions</h2>
+    <div className="m-4 mr-0 flex h-full w-80 flex-col overflow-hidden rounded-[24px] card">
+      <div className="border-b border-border p-4">
+        <p className="section-label">{messages.editor.structure}</p>
+        <h2 className="text-lg font-bold text-text-primary">{messages.editor.questions}</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -74,7 +77,7 @@ export const LeftPanel: React.FC = () => {
                   if (state.questions.length > 1) {
                     dispatch({ type: 'DELETE_QUESTION', payload: id });
                   } else {
-                    alert('You must have at least one question.');
+                    alert(messages.editor.minimumOneQuestion);
                   }
                 }}
               />
@@ -84,10 +87,10 @@ export const LeftPanel: React.FC = () => {
 
         <button
           onClick={handleAddQuestion}
-          className="w-full mt-4 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-[12px] text-text-muted hover:border-indigo hover:text-indigo hover:bg-analyst-blue-bg transition-all duration-200"
+          className="empty-dashed mt-4 flex w-full items-center justify-center gap-2 rounded-[16px] py-3 text-text-muted transition-all duration-200 hover:bg-[rgba(255,255,255,0.45)] hover:text-[var(--color-indigo)]"
         >
           <Plus size={20} />
-          <span className="font-bold">Add Question</span>
+          <span className="font-bold">{messages.editor.addQuestion}</span>
         </button>
       </div>
     </div>

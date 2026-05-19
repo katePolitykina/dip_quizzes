@@ -39,6 +39,7 @@ import type {
   SocketEnvelope,
   TeamAnswerEventPayload,
 } from './types/api';
+import { useI18n } from './i18n/I18nProvider';
 
 type ScreenState = 'dashboard' | 'editor' | 'join' | 'room' | 'detailedResult';
 type AppPath = '/' | '/dashboard' | '/editor' | '/join' | `/room/${string}` | `/room/${string}/detailedResult` | '/oauth2/callback';
@@ -84,6 +85,7 @@ function App() {
   const auth = useAppSelector((state) => state.auth);
   const quizzes = useAppSelector((state) => state.quizzes);
   const room = useAppSelector((state) => state.room);
+  const { messages } = useI18n();
 
   const [pathname, setPathname] = useState<string>(() => window.location.pathname);
   const [currentScreen, setCurrentScreen] = useState<ScreenState>(() => getScreenFromPath(window.location.pathname));
@@ -184,7 +186,7 @@ function App() {
         dispatch(clearRoom());
         dispatch(setHistogram(null));
         dispatch(markKicked());
-        setJoiningError('You were kicked from the room.');
+        setJoiningError(messages.app.kickedFromRoom);
         navigateToScreen('join', true);
       },
       onEnvelope: (envelope) => handleSocketEnvelope(envelope),
@@ -260,7 +262,7 @@ function App() {
       dispatch(clearRoom());
       dispatch(setHistogram(null));
       dispatch(markKicked());
-      setJoiningError('You were kicked from the room.');
+      setJoiningError(messages.app.kickedFromRoom);
       navigateToScreen('join', true);
     }
   }, [room.session, auth.session, currentScreen, dispatch]);
@@ -281,7 +283,7 @@ function App() {
     dispatch(clearRoom());
     dispatch(setHistogram(null));
     setHostingQuizId(null);
-    setJoiningError('The host ended the room.');
+    setJoiningError(messages.app.hostEndedRoom);
     navigateToScreen('join', true);
   }, [room.session, auth.session, currentScreen, dispatch]);
 
@@ -429,8 +431,8 @@ function App() {
   if (currentScreen === 'dashboard') {
     if (auth.session?.role === 'ROLE_USER' && !auth.profile) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="card px-6 py-5 text-lg font-semibold text-text-secondary">Loading profile...</div>
+        <div className="screen-shell flex items-center justify-center">
+          <div className="card px-6 py-5 text-lg font-semibold text-text-secondary">{messages.app.loadingProfile}</div>
         </div>
       );
     }
@@ -441,7 +443,7 @@ function App() {
         onHostGame={handleHostGame}
         onEditQuiz={handleEditQuiz}
         onDeleteQuiz={(quizId, quizTitle) => {
-          if (!window.confirm(`Delete "${quizTitle}"? This cannot be undone.`)) {
+          if (!window.confirm(messages.app.confirmDeleteQuiz(quizTitle))) {
             return;
           }
           void dispatch(removeQuiz(quizId));
@@ -485,9 +487,9 @@ function App() {
         />
         <button
           onClick={() => navigateToScreen('dashboard')}
-          className="absolute bottom-4 left-4 bg-black/50 hover:bg-black text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm transition-colors z-50"
+          className="btn-secondary btn-glass absolute bottom-4 left-4 z-50 px-4 py-2 text-sm"
         >
-          ← Dashboard
+          {messages.app.backDashboard}
         </button>
       </div>
     );
@@ -496,12 +498,12 @@ function App() {
   if (currentScreen === 'join') {
     return (
       <div className="relative h-screen">
-        <JoinView onJoin={handleJoin} isJoining={isJoining} error={joiningError ?? (room.kicked ? 'You were removed from the room.' : null)} />
+        <JoinView onJoin={handleJoin} isJoining={isJoining} error={joiningError ?? (room.kicked ? messages.app.removedFromRoom : null)} />
         <button
           onClick={() => navigateToScreen('dashboard')}
-          className="absolute bottom-4 left-4 bg-white/20 hover:bg-white text-white hover:text-black px-4 py-2 rounded-lg text-sm backdrop-blur-sm transition-colors z-50"
+          className="btn-secondary btn-glass absolute bottom-4 left-4 z-50 px-4 py-2 text-sm"
         >
-          ← Dashboard
+          {messages.app.backDashboard}
         </button>
       </div>
     );
@@ -513,7 +515,7 @@ function App() {
         <ActiveLobby
           session={room.session}
           currentParticipantId={currentParticipant?.participantId}
-          hostDisplayName={auth.session?.identity.displayName ?? 'Host'}
+          hostDisplayName={auth.session?.identity.displayName ?? messages.app.hostFallback}
           isHost={isHost}
           onAutoDistribute={() => {
             void apiClient.autoDistribute(room.session!.pin, { teamCount: room.session!.configuredTeamCount ?? 2 })
@@ -537,7 +539,7 @@ function App() {
           }}
           onStartQuiz={() => {
             if (!hostingQuizId) {
-              dispatch(setRoomError('No quiz was selected for this room.'));
+              dispatch(setRoomError(messages.app.noQuizSelected));
               return;
             }
             const pin = room.session?.pin;
@@ -598,7 +600,7 @@ function App() {
         <ActiveLobby
           session={room.session}
           currentParticipantId={null}
-          hostDisplayName={auth.session?.identity.displayName ?? 'Host'}
+          hostDisplayName={auth.session?.identity.displayName ?? messages.app.hostFallback}
           isHost
           onAutoDistribute={() => {
             void apiClient.autoDistribute(room.session!.pin, { teamCount: room.session!.configuredTeamCount ?? 2 })
@@ -622,7 +624,7 @@ function App() {
           }}
           onStartQuiz={() => {
             if (!hostingQuizId) {
-              dispatch(setRoomError('No quiz was selected for this room.'));
+              dispatch(setRoomError(messages.app.noQuizSelected));
               return;
             }
             const pin = room.session?.pin;
@@ -691,8 +693,8 @@ function App() {
 
   if (currentScreen === 'room' && room.session) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="card px-6 py-5 text-lg font-semibold text-text-secondary">Waiting for participant sync...</div>
+      <div className="screen-shell flex items-center justify-center">
+        <div className="card px-6 py-5 text-lg font-semibold text-text-secondary">{messages.app.waitingForParticipantSync}</div>
       </div>
     );
   }

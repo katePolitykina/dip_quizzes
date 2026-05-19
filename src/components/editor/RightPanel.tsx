@@ -1,9 +1,11 @@
 import React from 'react';
 import { Settings2, Clock, Hash } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export const RightPanel: React.FC = () => {
   const { state, dispatch } = useQuiz();
+  const { messages } = useI18n();
 
   const activeQuestion = state.questions.find(
     (q) => q.id === state.activeQuestionId
@@ -11,8 +13,8 @@ export const RightPanel: React.FC = () => {
 
   if (!activeQuestion) {
     return (
-      <div className="w-72 bg-white border-l border-gray-200 h-full p-6 flex items-center justify-center text-gray-400">
-        <p className="text-sm text-center">No question selected</p>
+      <div className="card m-4 ml-0 flex h-full w-72 items-center justify-center p-6 text-gray-400">
+        <p className="text-sm text-center">{messages.editor.noQuestionSelected}</p>
       </div>
     );
   }
@@ -39,10 +41,13 @@ export const RightPanel: React.FC = () => {
   };
 
   return (
-    <div className="w-72 flex flex-col bg-[var(--color-surface)] border-l border-[var(--color-border)] h-full overflow-hidden">
-      <div className="p-4 border-b border-[var(--color-border)] flex items-center gap-2 text-[var(--color-text-primary)]">
+    <div className="card m-4 ml-0 flex h-full w-72 flex-col overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-[var(--color-border)] p-4 text-[var(--color-text-primary)]">
         <Settings2 size={20} />
-        <h2 className="text-lg font-bold">Settings</h2>
+        <div>
+          <p className="section-label">{messages.editor.question}</p>
+          <h2 className="text-lg font-bold">{messages.editor.settings}</h2>
+        </div>
       </div>
 
       <div className="p-6 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
@@ -51,10 +56,10 @@ export const RightPanel: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[var(--color-text-secondary)] font-semibold">
               <Hash size={18} />
-              <label>Points</label>
+              <label>{messages.editor.points}</label>
             </div>
-            <span className="bg-[var(--color-indigo-light)]/10 text-[var(--color-indigo)] px-2 py-0.5 rounded-md font-bold text-sm">
-              {activeQuestion.weight} pt
+            <span className="glass-inset rounded-full px-2.5 py-1 text-sm font-bold text-[var(--color-indigo-dark)]">
+              {messages.editor.pointsShort(activeQuestion.weight)}
             </span>
           </div>
           
@@ -68,7 +73,7 @@ export const RightPanel: React.FC = () => {
             className="w-full accent-[var(--color-indigo)]"
           />
           <p className="text-xs text-[var(--color-text-muted)]">
-            Adjust the weight of this question in the final score.
+            {messages.editor.adjustWeight}
           </p>
         </div>
 
@@ -78,7 +83,7 @@ export const RightPanel: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-[var(--color-text-secondary)] font-semibold mb-2">
             <Clock size={18} />
-            <label>Question Timer</label>
+            <label>{messages.editor.questionTimer}</label>
           </div>
           
           <div className="flex items-center gap-3">
@@ -89,12 +94,12 @@ export const RightPanel: React.FC = () => {
               placeholder={state.globalTimer.toString()}
               value={activeQuestion.timerOverride || ''}
               onChange={handleTimerOverrideChange}
-              className="w-24 px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-indigo)] focus:border-[var(--color-indigo)] transition-shadow bg-transparent"
+              className="glass-input w-24 px-3 py-2"
             />
-            <span className="text-[var(--color-text-muted)] font-medium">seconds</span>
+            <span className="text-[var(--color-text-muted)] font-medium">{messages.editor.seconds}</span>
           </div>
           <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
-            Override the global timer ({state.globalTimer}s) for this specific question. Leave empty to use global setting.
+            {messages.editor.overrideGlobalTimer(state.globalTimer)}
           </p>
         </div>
       </div>

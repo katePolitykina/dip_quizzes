@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Zap, Users, SlidersHorizontal } from 'lucide-react';
 import { UserProfileHeader } from './UserProfileHeader';
 import { GlobalActions } from './GlobalActions';
 import { QuizLibrary } from './QuizLibrary';
@@ -7,6 +8,7 @@ import { HostGameModal, type HostGameSettings } from './HostGameModal';
 import type { QuizSnippet } from './QuizCard';
 import type { UserMeResponse } from '../../types/api';
 import { AuthPanel } from '../auth/AuthPanel';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface DashboardProps {
   onCreateQuiz: () => void;
@@ -41,6 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSaveProfile,
   onLogout,
 }) => {
+  const { messages } = useI18n();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [hostingSelection, setHostingSelection] = useState<{ quizId: string; quizTitle: string } | null>(null);
 
@@ -50,26 +53,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   if (!user || isGuest) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start">
-          <div className="card p-8 bg-gradient-to-br from-white via-white to-[var(--color-indigo-light)]/10">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--color-indigo)]">Host Console</p>
-            <h1 className="mt-4 text-5xl font-black tracking-tight text-text-primary">Run the live quiz from one room state.</h1>
-            <p className="mt-4 text-lg text-text-secondary leading-8">
-              Sign in to manage quizzes, create rooms, moderate players, and control the real-time game loop.
+      <div className="screen-shell flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-5xl grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+          <div className="text-[var(--color-text-primary)]">
+            <p className="section-label">{messages.dashboard.hostConsole}</p>
+            <h1 className="mt-4 text-[clamp(4rem,9vw,5.5rem)] font-black leading-[0.94] tracking-[-0.04em] text-balance">
+              <span className="gradient-text">{messages.dashboard.heroTitle}</span>
+            </h1>
+            <p className="mt-4 text-xl font-extrabold leading-snug text-[var(--color-text-primary)]">
+              {messages.dashboard.heroSubtitle}
+            </p>
+            <p className="mt-3 max-w-xl text-[17px] font-semibold leading-7 text-[var(--color-text-secondary)]">
+              {messages.dashboard.heroDescription}
             </p>
             <div className="mt-8 grid sm:grid-cols-3 gap-3">
-              <div className="card p-4">
-                <p className="text-sm font-semibold text-text-muted">REST</p>
-                <p className="mt-2 font-bold text-text-primary">JWT-backed quiz CRUD</p>
+              <div className="card-soft card p-4">
+                <Zap size={20} className="text-[var(--color-text-secondary)]" />
+                <p className="mt-2 font-extrabold text-[var(--color-text-primary)]">{messages.dashboard.liveGameRooms}</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">{messages.dashboard.realTimeSync}</p>
               </div>
-              <div className="card p-4">
-                <p className="text-sm font-semibold text-text-muted">STOMP</p>
-                <p className="mt-2 font-bold text-text-primary">Live room state sync</p>
+              <div className="card-soft card p-4">
+                <Users size={20} className="text-[var(--color-text-secondary)]" />
+                <p className="mt-2 font-extrabold text-[var(--color-text-primary)]">{messages.dashboard.teamPlay}</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">{messages.dashboard.teamRoles}</p>
               </div>
-              <div className="card p-4">
-                <p className="text-sm font-semibold text-text-muted">Roles</p>
-                <p className="mt-2 font-bold text-text-primary">Captain, Analyst, Member</p>
+              <div className="card-soft card p-4">
+                <SlidersHorizontal size={20} className="text-[var(--color-text-secondary)]" />
+                <p className="mt-2 font-extrabold text-[var(--color-text-primary)]">{messages.dashboard.fullControl}</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">{messages.dashboard.fullControlDescription}</p>
               </div>
             </div>
           </div>
@@ -86,8 +97,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 flex flex-col gap-10">
+    <div className="screen-shell">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20 flex flex-col gap-8">
         <section>
           <UserProfileHeader
             displayName={user.displayName}
@@ -104,7 +115,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
         </section>
 
-        <section>
+        <section className="card p-6">
           <QuizLibrary
             quizzes={quizzes}
             onHostGame={(quizId, quizTitle) => setHostingSelection({ quizId, quizTitle })}
@@ -113,12 +124,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
         </section>
 
-        <section className="flex justify-end">
+        <section className="flex justify-end pb-4">
           <button
             onClick={onLogout}
-            className="text-sm font-semibold text-text-muted hover:text-text-primary underline"
+            className="text-sm font-semibold text-white/60 hover:text-white underline transition-colors"
           >
-            Sign out
+            {messages.dashboard.signOut}
           </button>
         </section>
       </div>

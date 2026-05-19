@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import type { Answer, AnswerColor } from '../../types/quiz';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface AnswerCardProps {
   answer: Answer;
@@ -11,23 +12,23 @@ interface AnswerCardProps {
 const colorMap: Record<AnswerColor, { bg: string; border: string; text: string }> = {
   red: {
     bg: 'bg-answer-red',
-    border: 'border-answer-red',
-    text: 'text-white',
+    border: 'border-white/90',
+    text: 'text-[var(--color-text-primary)]',
   },
   blue: {
     bg: 'bg-answer-blue',
-    border: 'border-answer-blue',
-    text: 'text-white',
+    border: 'border-white/90',
+    text: 'text-[var(--color-text-primary)]',
   },
   yellow: {
     bg: 'bg-answer-yellow',
-    border: 'border-answer-yellow',
-    text: 'text-yellow-900',
+    border: 'border-white/90',
+    text: 'text-[var(--color-text-primary)]',
   },
   green: {
     bg: 'bg-answer-green',
-    border: 'border-answer-green',
-    text: 'text-white',
+    border: 'border-white/90',
+    text: 'text-[var(--color-text-primary)]',
   },
 };
 
@@ -36,24 +37,24 @@ export const AnswerCard: React.FC<AnswerCardProps> = ({
   onChangeText,
   onToggleCorrect,
 }) => {
+  const { messages } = useI18n();
   const theme = colorMap[answer.color];
 
   return (
     <div
-      className={`relative rounded-[16px] h-40 shadow-sm border-2 overflow-hidden transition-all duration-200 flex flex-col ${theme.border} ${theme.bg}`}
+      className={`relative flex h-40 flex-col overflow-hidden rounded-[22px] border transition-all duration-200 shadow-[0_12px_30px_-18px_rgba(189,73,138,0.24)] ${theme.border} ${theme.bg}`}
     >
       <div className="flex-1 p-3 flex flex-col relative">
-        {/* Correct toggle */}
         <button
           onClick={onToggleCorrect}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-md z-10
+          className={`absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 shadow-md
             ${
               answer.isCorrect
-                ? 'bg-success text-white border-2 border-white scale-110'
-                : 'bg-white/20 text-white/50 border-2 border-white/30 hover:bg-white/30'
+                ? 'bg-[var(--color-midnight)] text-white border-white/90 scale-110'
+                : 'bg-white/45 text-[var(--color-text-muted)] border-white/70 hover:bg-white/70'
             }
           `}
-          title="Mark as correct"
+          title={messages.editor.markAsCorrect}
         >
           <Check size={18} strokeWidth={answer.isCorrect ? 4 : 2} />
         </button>
@@ -61,8 +62,8 @@ export const AnswerCard: React.FC<AnswerCardProps> = ({
         <textarea
           value={answer.text}
           onChange={(e) => onChangeText(e.target.value)}
-          placeholder="Add answer..."
-          className={`w-full h-full bg-transparent resize-none outline-none font-semibold text-lg pt-10 px-2 placeholder-white/60 ${theme.text}`}
+          placeholder={messages.editor.addAnswer}
+          className={`h-full w-full resize-none bg-transparent px-2 pt-10 text-lg font-extrabold outline-none placeholder:text-[var(--color-text-muted)] ${theme.text}`}
         />
       </div>
     </div>

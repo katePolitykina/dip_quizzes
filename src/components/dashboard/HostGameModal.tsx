@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export interface HostGameSettings {
   playInTeams: boolean;
@@ -14,19 +15,20 @@ interface HostGameModalProps {
 }
 
 export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart, onClose }) => {
+  const { messages } = useI18n();
   const [playInTeams, setPlayInTeams] = useState(true);
   const [teamCount, setTeamCount] = useState(2);
   const [cbmEnabled, setCbmEnabled] = useState(false);
 
   const summary = useMemo(() => {
     const modeSummary = !playInTeams
-      ? 'Each participant will play on their own scoreline.'
-      : `${teamCount} teams will be used in the lobby.`;
+      ? messages.dashboard.hostGameSummarySolo
+      : messages.dashboard.hostGameSummaryTeams(teamCount);
     if (!cbmEnabled) {
       return modeSummary;
     }
-    return `${modeSummary} Confidence-based marking is enabled.`;
-  }, [cbmEnabled, playInTeams, teamCount]);
+    return messages.dashboard.hostGameSummaryCbm(modeSummary);
+  }, [cbmEnabled, playInTeams, teamCount, messages]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
@@ -40,15 +42,15 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/45 backdrop-blur-sm p-4" onClick={handleBackdropClick}>
-      <div className="w-full max-w-lg overflow-hidden rounded-[16px] bg-surface shadow-2xl">
+      <div className="glass-overlay w-full max-w-lg overflow-hidden">
         <div className="flex items-center justify-between border-b border-border p-6">
           <div>
-            <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">Host Game</h2>
+            <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">{messages.dashboard.hostGameTitle}</h2>
             <p className="mt-1 text-sm font-medium text-text-secondary">{quizTitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-[12px] p-2 text-text-muted transition-all duration-200 hover:bg-background hover:text-text-primary"
+            className="btn-secondary btn-glass min-h-0 rounded-full p-2 text-text-muted"
           >
             <X size={22} />
           </button>
@@ -58,46 +60,46 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setPlayInTeams(false)}
-              className={`rounded-[14px] border px-4 py-4 text-left transition-all ${
-                !playInTeams ? 'border-indigo bg-indigo/10 text-text-primary' : 'border-border bg-white text-text-secondary'
+              className={`rounded-[16px] border px-4 py-4 text-left transition-all ${
+                !playInTeams ? 'border-[var(--color-indigo)] bg-[rgba(249,168,212,0.18)] text-text-primary' : 'glass-inset text-text-secondary'
               }`}
             >
-              <p className="text-sm font-bold uppercase tracking-[0.18em]">Solo</p>
-              <p className="mt-2 text-sm font-medium">One player per scoreline.</p>
+              <p className="text-sm font-bold uppercase tracking-[0.18em]">{messages.dashboard.solo}</p>
+              <p className="mt-2 text-sm font-medium">{messages.dashboard.soloDescription}</p>
             </button>
             <button
               onClick={() => setPlayInTeams(true)}
-              className={`rounded-[14px] border px-4 py-4 text-left transition-all ${
-                playInTeams ? 'border-indigo bg-indigo/10 text-text-primary' : 'border-border bg-white text-text-secondary'
+              className={`rounded-[16px] border px-4 py-4 text-left transition-all ${
+                playInTeams ? 'border-[var(--color-indigo)] bg-[rgba(249,168,212,0.18)] text-text-primary' : 'glass-inset text-text-secondary'
               }`}
             >
-              <p className="text-sm font-bold uppercase tracking-[0.18em]">Teams</p>
-              <p className="mt-2 text-sm font-medium">Players are grouped before the game starts.</p>
+              <p className="text-sm font-bold uppercase tracking-[0.18em]">{messages.dashboard.teams}</p>
+              <p className="mt-2 text-sm font-medium">{messages.dashboard.teamsDescription}</p>
             </button>
           </div>
 
           {playInTeams && (
-            <div className="rounded-[14px] border border-border bg-background p-4">
+            <div className="glass-inset rounded-[16px] p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold text-text-primary">Number of teams</p>
-                  <p className="mt-1 text-sm text-text-secondary">The room will require at least two players per team.</p>
+                  <p className="text-sm font-bold text-text-primary">{messages.dashboard.numberOfTeams}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{messages.dashboard.roomRequiresTwoPlayers}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateTeamCount(-1)}
                     disabled={teamCount <= 2}
-                    className="rounded-[12px] border border-border bg-white p-2 text-text-primary disabled:opacity-50"
+                    className="btn-secondary btn-glass min-h-0 rounded-full p-2 text-text-primary disabled:opacity-50"
                   >
                     <Minus size={18} />
                   </button>
-                  <div className="min-w-14 rounded-[12px] bg-white px-4 py-2 text-center text-xl font-black text-text-primary">
+                  <div className="glass-inset min-w-14 rounded-full px-4 py-2 text-center text-xl font-black text-text-primary">
                     {teamCount}
                   </div>
                   <button
                     onClick={() => updateTeamCount(1)}
                     disabled={teamCount >= 8}
-                    className="rounded-[12px] border border-border bg-white p-2 text-text-primary disabled:opacity-50"
+                    className="btn-secondary btn-glass min-h-0 rounded-full p-2 text-text-primary disabled:opacity-50"
                   >
                     <Plus size={18} />
                   </button>
@@ -106,11 +108,11 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
             </div>
           )}
 
-          <div className="rounded-[14px] border border-border bg-background p-4">
+          <div className="glass-inset rounded-[16px] p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-text-primary">Confidence-based marking</p>
-                <p className="mt-1 text-sm text-text-secondary">Captains must choose confidence before confirming an answer.</p>
+                <p className="text-sm font-bold text-text-primary">{messages.dashboard.confidenceBasedMarking}</p>
+                <p className="mt-1 text-sm text-text-secondary">{messages.dashboard.captainsMustChooseConfidence}</p>
               </div>
               <button
                 type="button"
@@ -118,7 +120,7 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
                 aria-checked={cbmEnabled}
                 onClick={() => setCbmEnabled((current) => !current)}
                 className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
-                  cbmEnabled ? 'bg-indigo' : 'bg-border'
+                  cbmEnabled ? 'bg-[var(--color-midnight)]' : 'bg-white/80'
                 }`}
               >
                 <span
@@ -130,7 +132,7 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
             </div>
           </div>
 
-          <div className="rounded-[14px] bg-background px-4 py-3 text-sm font-semibold text-text-secondary">
+          <div className="glass-inset rounded-[16px] px-4 py-3 text-sm font-semibold text-text-secondary">
             {summary}
           </div>
         </div>
@@ -138,15 +140,15 @@ export const HostGameModal: React.FC<HostGameModalProps> = ({ quizTitle, onStart
         <div className="flex gap-3 p-6 pt-0">
           <button
             onClick={onClose}
-            className="btn-secondary flex-1 rounded-[12px] border-2 border-border text-text-secondary transition-all duration-200 hover:bg-background"
+            className="btn-secondary btn-glass flex-1"
           >
-            Cancel
+            {messages.dashboard.cancel}
           </button>
           <button
             onClick={() => onStart({ playInTeams, teamCount: playInTeams ? teamCount : null, cbmEnabled })}
-            className="btn-secondary flex-1 rounded-[12px] bg-teal text-white transition-all duration-200 hover:bg-teal-dark"
+            className="btn-secondary btn-cta flex-1"
           >
-            Create Room
+            {messages.dashboard.createRoom}
           </button>
         </div>
       </div>

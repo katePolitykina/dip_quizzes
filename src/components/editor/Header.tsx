@@ -3,6 +3,7 @@ import { Settings, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import type { Quiz } from '../../types/quiz';
 import type { QuizAction } from '../../context/QuizContext';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface HeaderProps {
   onSave?: (quiz: Quiz, dispatch: React.Dispatch<QuizAction>) => void;
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveError }) => {
   const { state, dispatch } = useQuiz();
+  const { messages } = useI18n();
   const [titleInput, setTitleInput] = useState(state.title);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -34,30 +36,30 @@ export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveEr
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-surface border-b border-border">
-      <div className="flex-1">
+    <header className="card relative z-[150] mx-4 mt-4 flex flex-col gap-4 border-b border-border p-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="min-w-0 flex-1">
         <input
           type="text"
           value={titleInput}
           onChange={handleTitleChange}
-          placeholder="Quiz Title"
-          className={`text-2xl font-bold bg-transparent border-b-2 outline-none px-2 py-1 transition-all duration-200 w-full max-w-lg ${
+          placeholder={messages.editor.quizTitle}
+          className={`w-full max-w-lg border-b-2 bg-transparent px-2 py-1 text-2xl font-black outline-none transition-all duration-200 ${
             !isTitleValid && titleInput.length > 0
               ? 'border-error text-error'
-              : 'border-transparent focus:border-indigo'
+              : 'border-transparent focus:border-[var(--color-indigo)]'
           }`}
         />
         {!isTitleValid && titleInput.length > 0 && (
           <p className="text-error text-xs mt-1 px-2 font-medium">
-            Title must be between 3 and 100 characters.
+            {messages.editor.titleValidation}
           </p>
         )}
       </div>
 
-      <div className="flex items-center gap-4 relative">
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+      <div className="relative z-[120] flex flex-wrap items-center justify-end gap-3 xl:flex-nowrap">
+        <div className="min-w-0 flex items-center gap-2 text-sm text-text-muted">
           {isSaving ? (
-            <span className="animate-pulse font-medium">Saving...</span>
+            <span className="animate-pulse font-medium">{messages.editor.saving}</span>
           ) : saveError ? (
             <>
               <AlertCircle size={16} className="text-error" />
@@ -66,37 +68,37 @@ export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveEr
           ) : state.lastSaved ? (
             <>
               <CheckCircle2 size={16} className="text-success" />
-              <span className="font-medium">Saved</span>
+              <span className="font-medium">{messages.editor.saved}</span>
             </>
           ) : (
-            <span className="font-medium">Not saved</span>
+            <span className="font-medium">{messages.editor.notSaved}</span>
           )}
         </div>
 
         <button
           onClick={handleSave}
           disabled={!isTitleValid || isSaving}
-          className="btn-secondary flex items-center gap-2 px-4 bg-indigo text-white rounded-[12px] hover:bg-indigo-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          className="btn-secondary btn-cta flex shrink-0 items-center gap-2 px-4 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Save size={18} />
-          Save
+          {messages.editor.save}
         </button>
 
         <button
           onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-          className="p-2 text-text-muted hover:bg-background hover:text-text-primary rounded-[12px] transition-all duration-200"
+          className="btn-secondary btn-glass min-h-0 shrink-0 rounded-full p-2 text-text-muted"
         >
           <Settings size={20} />
         </button>
 
         {isSettingsOpen && (
-          <div className="absolute top-full right-0 mt-2 w-64 card shadow-xl p-4 z-50">
-            <h3 className="font-bold text-text-primary mb-4">Quiz Settings</h3>
+          <div className="absolute right-0 bottom-full z-[200] mb-2 w-[min(16rem,calc(100vw-2rem))] card p-4 shadow-xl">
+            <h3 className="font-bold text-text-primary mb-4">{messages.editor.quizSettings}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="flex justify-between items-center text-sm font-medium text-text-secondary mb-1">
-                  Global Timer
+                  {messages.editor.globalTimer}
                   <span className="text-text-muted">{state.globalTimer}s</span>
                 </label>
                 <input
@@ -116,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveEr
 
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-text-secondary">
-                  CBM (Certainty Based Marking)
+                  {messages.editor.cbmFull}
                 </label>
                 <button
                   onClick={() =>

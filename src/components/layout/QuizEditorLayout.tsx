@@ -22,7 +22,7 @@ export const QuizEditorLayout: React.FC<QuizEditorLayoutProps> = ({
 }) => {
   return (
     <QuizProvider initialQuiz={initialQuiz}>
-      <div className="h-screen w-screen flex flex-col overflow-hidden bg-white font-sans text-gray-900">
+      <div className="screen-shell flex h-screen w-screen flex-col overflow-hidden text-gray-900">
         <Header onSave={onSave} isSaving={isSaving} saveError={saveError} />
         <div className="flex-1 flex overflow-hidden">
           <LeftPanel />

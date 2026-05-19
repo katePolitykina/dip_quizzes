@@ -36,8 +36,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   return (
     <a
       href={getGoogleOAuthStartUrl()}
-      className={`flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-[#dadce0] bg-white px-4 text-[14px] font-medium text-[#3c4043] shadow-[0_1px_2px_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] transition hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] focus:outline-none focus:ring-2 focus:ring-[#1a73e8]/30 ${className}`}
-      style={{ fontFamily: 'Roboto, Arial, sans-serif' }}
+      className={`btn-secondary btn-glass flex h-14 w-full items-center justify-center gap-3 px-4 text-[15px] font-extrabold text-[var(--color-text-primary)] ${className}`}
     >
       <GoogleLogo />
       <span>{label}</span>

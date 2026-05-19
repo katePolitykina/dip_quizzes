@@ -1,17 +1,19 @@
 import React from 'react';
 import { PackageOpen } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export const EmptyState: React.FC = () => {
+  const { messages } = useI18n();
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-background rounded-[16px] border-2 border-dashed border-border">
-      <div className="w-24 h-24 bg-analyst-blue-bg rounded-full flex items-center justify-center mb-6 text-violet-light">
-        <PackageOpen size={48} strokeWidth={1.5} />
+    <div className="card empty-dashed flex flex-col items-center justify-center rounded-[22px] px-4 py-16 text-center">
+      <div className="glass-inset mb-5 flex h-20 w-20 items-center justify-center rounded-full text-[var(--color-indigo)]">
+        <PackageOpen size={40} strokeWidth={1.5} />
       </div>
-      <h3 className="text-xl font-bold text-text-primary mb-2">
-        You haven't created any quizzes yet
+      <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">
+        {messages.dashboard.noQuizzesYet}
       </h3>
-      <p className="text-text-muted max-w-sm">
-        Get started by creating your first quiz. Click the "Create New Quiz" button above to jump into the editor.
+      <p className="text-[var(--color-text-muted)] max-w-sm leading-relaxed">
+        {messages.dashboard.createFirstQuiz}
       </p>
     </div>
   );

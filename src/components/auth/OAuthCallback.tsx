@@ -3,6 +3,7 @@ import { useAppDispatch } from '../../store/hooks';
 import { fetchMe, completeOAuthLogin, logout, setAuthError } from '../../store/authSlice';
 import { fetchQuizzes } from '../../store/quizzesSlice';
 import { getOAuthErrorMessage, parseOAuthSessionFromUrl } from '../../lib/oauth';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface OAuthCallbackProps {
   onResolved: (path: '/dashboard', replace?: boolean) => void;
@@ -10,7 +11,8 @@ interface OAuthCallbackProps {
 
 export const OAuthCallback: React.FC<OAuthCallbackProps> = ({ onResolved }) => {
   const dispatch = useAppDispatch();
-  const [message, setMessage] = useState('Completing Google sign-in...');
+  const { messages } = useI18n();
+  const [message, setMessage] = useState(messages.auth.completingGoogleSignIn);
   const resolveNavigation = useEffectEvent(onResolved);
 
   useEffect(() => {
@@ -31,8 +33,8 @@ export const OAuthCallback: React.FC<OAuthCallbackProps> = ({ onResolved }) => {
 
       const session = parseOAuthSessionFromUrl(window.location.search);
       if (!session) {
-        setMessage('Authentication failed');
-        dispatch(setAuthError('Authentication failed'));
+        setMessage(messages.auth.authenticationFailed);
+        dispatch(setAuthError(messages.auth.authenticationFailed));
         redirectTimer = window.setTimeout(() => {
           resolveNavigation('/dashboard', true);
         }, 1200);
@@ -46,8 +48,8 @@ export const OAuthCallback: React.FC<OAuthCallbackProps> = ({ onResolved }) => {
         resolveNavigation('/dashboard', true);
       } catch {
         dispatch(logout());
-        dispatch(setAuthError('Authentication failed'));
-        setMessage('Authentication failed');
+        dispatch(setAuthError(messages.auth.authenticationFailed));
+        setMessage(messages.auth.authenticationFailed);
         redirectTimer = window.setTimeout(() => {
           resolveNavigation('/dashboard', true);
         }, 1200);
@@ -61,13 +63,13 @@ export const OAuthCallback: React.FC<OAuthCallbackProps> = ({ onResolved }) => {
         window.clearTimeout(redirectTimer);
       }
     };
-  }, [dispatch]);
+  }, [dispatch, messages.auth.authenticationFailed]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_38%),linear-gradient(135deg,#f8fafc_0%,#eef2ff_48%,#ffffff_100%)] px-4">
+    <div className="screen-shell flex min-h-screen items-center justify-center px-4">
       <div className="card w-full max-w-md px-8 py-10 text-center shadow-xl">
-        <div className="mx-auto h-14 w-14 rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-indigo)] animate-spin" />
-        <h1 className="mt-6 text-3xl font-black tracking-tight text-text-primary">Google Authentication</h1>
+        <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-[rgba(255,255,255,0.9)] border-t-[var(--color-indigo)]" />
+        <h1 className="mt-6 text-3xl font-black tracking-tight text-text-primary">{messages.auth.googleAuthentication}</h1>
         <p className="mt-3 text-base leading-7 text-text-secondary">{message}</p>
       </div>
     </div>

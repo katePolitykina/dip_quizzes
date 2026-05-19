@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FinalGameReportResponse } from '../../types/api';
+import { useI18n } from '../../i18n/I18nProvider';
 
 interface DetailedResultScreenProps {
   quizTitle: string;
@@ -25,6 +26,7 @@ export const DetailedResultScreen: React.FC<DetailedResultScreenProps> = ({
   onBackToRoom,
   onLeaveRoom,
 }) => {
+  const { messages } = useI18n();
   const handleSaveResult = () => {
     const workbookHtml = `<!DOCTYPE html>
 <html>
@@ -41,21 +43,21 @@ export const DetailedResultScreen: React.FC<DetailedResultScreenProps> = ({
   </head>
   <body>
     <h1>${escapeHtml(quizTitle)}</h1>
-    <p class="meta">Room ${escapeHtml(roomPin)}</p>
+    <p class="meta">${escapeHtml(messages.results.roomMeta(roomPin))}</p>
     ${finalReport.questions.map((question, index) => `
-      <h2>Question ${index + 1}</h2>
+      <h2>${escapeHtml(messages.game.questionNumber(index + 1))}</h2>
       <p>${escapeHtml(question.questionText)}</p>
       <table>
         <thead>
           <tr>
-            <th>Field</th>
+            <th>${escapeHtml(messages.results.field)}</th>
             ${question.playerAnswers.map((answer) => `<th>${escapeHtml(answer.displayName)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Answer</td>
-            ${question.playerAnswers.map((answer) => `<td>${escapeHtml(answer.selectedAnswerText ?? 'No answer')}</td>`).join('')}
+            <td>${escapeHtml(messages.results.answer)}</td>
+            ${question.playerAnswers.map((answer) => `<td>${escapeHtml(answer.selectedAnswerText ?? messages.results.noAnswer)}</td>`).join('')}
           </tr>
         </tbody>
       </table>
@@ -75,23 +77,28 @@ export const DetailedResultScreen: React.FC<DetailedResultScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-white/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+    <div className="screen-shell">
+      <header className="sticky top-0 z-10">
+        <div className="card mx-auto mt-4 flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-text-muted">Detailed Result</p>
+            <p className="section-label">{messages.game.detailedResult} · {roomPin}</p>
             <h1 className="text-2xl font-black tracking-tight text-text-primary">{quizTitle}</h1>
-            <p className="mt-1 text-sm font-medium text-text-secondary">Room {roomPin}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={handleSaveResult} className="rounded-2xl bg-indigo px-4 py-2 font-semibold text-white">
-              Save result
+            <button
+              onClick={handleSaveResult}
+              className="btn-secondary btn-aurora px-4"
+            >
+              {messages.results.saveResult}
             </button>
-            <button onClick={onBackToRoom} className="rounded-2xl border border-border px-4 py-2 font-semibold text-text-primary">
-              Back to final report
+            <button
+              onClick={onBackToRoom}
+              className="btn-secondary btn-glass px-4"
+            >
+              {messages.game.finalReport}
             </button>
-            <button onClick={onLeaveRoom} className="text-sm font-semibold text-text-muted underline">
-              Leave room
+            <button onClick={onLeaveRoom} className="btn-secondary btn-glass px-4 text-sm">
+              {messages.game.leaveRoom}
             </button>
           </div>
         </div>
@@ -100,13 +107,13 @@ export const DetailedResultScreen: React.FC<DetailedResultScreenProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {finalReport.questions.map((question, index) => (
           <section key={question.questionId} className="card p-6 overflow-x-auto">
-            <h2 className="text-2xl font-black text-text-primary">Question {index + 1}</h2>
+            <h2 className="text-2xl font-black text-text-primary">{messages.game.questionNumber(index + 1)}</h2>
             <p className="mt-2 text-text-secondary">{question.questionText}</p>
-            <table className="mt-5 min-w-full border-separate border-spacing-0 overflow-hidden rounded-2xl border border-border">
+            <table className="mt-5 min-w-full overflow-hidden rounded-2xl border border-border border-separate border-spacing-0">
               <thead>
-                <tr className="bg-background">
+                <tr className="bg-[rgba(255,255,255,0.62)]">
                   <th className="border-b border-border px-4 py-3 text-left text-sm font-bold uppercase tracking-[0.2em] text-text-muted">
-                    Field
+                    {messages.results.field}
                   </th>
                   {question.playerAnswers.map((answer) => (
                     <th
@@ -120,10 +127,10 @@ export const DetailedResultScreen: React.FC<DetailedResultScreenProps> = ({
               </thead>
               <tbody>
                 <tr className="bg-white">
-                  <td className="border-b border-border px-4 py-4 font-semibold text-text-secondary">Answer</td>
+                  <td className="border-b border-border px-4 py-4 font-semibold text-text-secondary">{messages.results.answer}</td>
                   {question.playerAnswers.map((answer) => (
                     <td key={`${question.questionId}-${answer.participantId}-answer`} className="border-b border-border px-4 py-4 font-semibold text-text-primary">
-                      {answer.selectedAnswerText ?? 'No answer'}
+                      {answer.selectedAnswerText ?? messages.results.noAnswer}
                     </td>
                   ))}
                 </tr>
