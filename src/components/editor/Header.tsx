@@ -84,63 +84,65 @@ export const Header: React.FC<HeaderProps> = ({ onSave, isSaving = false, saveEr
           {messages.editor.save}
         </button>
 
-        <button
-          onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-          className="btn-secondary btn-glass min-h-0 shrink-0 rounded-full p-2 text-text-muted"
-        >
-          <Settings size={20} />
-        </button>
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className="btn-secondary btn-glass min-h-0 shrink-0 rounded-full p-2 text-text-muted"
+          >
+            <Settings size={20} />
+          </button>
 
-        {isSettingsOpen && (
-          <div className="absolute right-0 bottom-full z-[200] mb-2 w-[min(16rem,calc(100vw-2rem))] card p-4 shadow-xl">
-            <h3 className="font-bold text-text-primary mb-4">{messages.editor.quizSettings}</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="flex justify-between items-center text-sm font-medium text-text-secondary mb-1">
-                  {messages.editor.globalTimer}
-                  <span className="text-text-muted">{state.globalTimer}s</span>
-                </label>
-                <input
-                  type="range"
-                  min="10"
-                  max="120"
-                  value={state.globalTimer}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'UPDATE_GLOBAL_SETTINGS',
-                      payload: { globalTimer: parseInt(e.target.value, 10) },
-                    })
-                  }
-                  className="w-full accent-indigo"
-                />
-              </div>
+          {isSettingsOpen && (
+            <div className="absolute top-full right-0 z-[200] mt-2 w-[min(16rem,calc(100vw-2rem))] rounded-[22px] border border-white bg-white p-4 shadow-xl">
+              <h3 className="font-bold text-text-primary mb-4">{messages.editor.quizSettings}</h3>
 
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-text-secondary">
-                  {messages.editor.cbmFull}
-                </label>
-                <button
-                  onClick={() =>
-                    dispatch({
-                      type: 'UPDATE_GLOBAL_SETTINGS',
-                      payload: { cbmEnabled: !state.cbmEnabled },
-                    })
-                  }
-                  className={`w-11 h-6 rounded-full transition-colors duration-200 relative ${
-                    state.cbmEnabled ? 'bg-indigo' : 'bg-border'
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${
-                      state.cbmEnabled ? 'left-6' : 'left-1'
-                    }`}
+              <div className="space-y-4">
+                <div>
+                  <label className="flex justify-between items-center text-sm font-medium text-text-secondary mb-1">
+                    {messages.editor.globalTimer}
+                    <span className="text-text-muted">{state.globalTimer}s</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="120"
+                    value={state.globalTimer}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'UPDATE_GLOBAL_SETTINGS',
+                        payload: { globalTimer: parseInt(e.target.value, 10) },
+                      })
+                    }
+                    className="w-full accent-indigo"
                   />
-                </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-text-secondary">
+                    {messages.editor.cbmFull}
+                  </label>
+                  <button
+                    onClick={() =>
+                      dispatch({
+                        type: 'UPDATE_GLOBAL_SETTINGS',
+                        payload: { cbmEnabled: !state.cbmEnabled },
+                      })
+                    }
+                    className={`w-11 h-6 rounded-full transition-colors duration-200 relative ${
+                      state.cbmEnabled ? 'bg-indigo' : 'bg-border'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${
+                        state.cbmEnabled ? 'left-6' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );
